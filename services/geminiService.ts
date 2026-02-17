@@ -1,16 +1,18 @@
+
 import { GoogleGenAI } from "@google/genai";
 import { SurveyResponse } from "../types";
 
 export const analyzeBullyingData = async (responses: SurveyResponse[], language: 'uz' | 'ru') => {
   if (responses.length === 0) return language === 'uz' ? "Tahlil qilish uchun ma'lumotlar mavjud emas." : "Нет данных для анализа.";
 
-  // Initialize with process.env.API_KEY as injected by vite.config.ts
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || "" });
+  // Fix: Initialize GoogleGenAI correctly using process.env.API_KEY directly as per requirements
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   const summary = responses.map(r => ({
     school: r.user.schoolNumber,
     class: `${r.user.classNumber}-${r.user.classLetter}`,
-    avgScore: Object.values(r.answers).reduce((a, b) => a + b, 0) / Object.values(r.answers).length
+    // Fix: Explicitly cast Object.values to number[] and type reduce parameters to resolve TS unknown error
+    avgScore: (Object.values(r.answers) as number[]).reduce((a: number, b: number) => a + b, 0) / (Object.values(r.answers).length || 1)
   }));
 
   const prompt = `
@@ -35,6 +37,7 @@ export const analyzeBullyingData = async (responses: SurveyResponse[], language:
       contents: prompt,
     });
     
+    // Fix: Access .text property directly
     return response.text || (language === 'uz' ? "Tahlil natijasi bo'sh qaytdi." : "Результат анализа пуст.");
   } catch (error) {
     console.error("AI Analysis Error:", error);

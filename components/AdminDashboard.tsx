@@ -26,7 +26,8 @@ export const AdminDashboard: React.FC<Props> = ({ data, lang, onClear, onLogout 
     data.forEach(r => {
       const key = `${r.user.classNumber}-${r.user.classLetter}`;
       if (!map[key]) map[key] = { name: key, score: 0, count: 0 };
-      const avg = Object.values(r.answers).reduce((a, b) => a + b, 0) / Object.values(r.answers).length;
+      // Fix: Explicitly type Object.values to number[] and reduce parameters to number to resolve TS unknown error
+      const avg = (Object.values(r.answers) as number[]).reduce((a: number, b: number) => a + b, 0) / (Object.values(r.answers).length || 1);
       map[key].score += avg;
       map[key].count += 1;
     });

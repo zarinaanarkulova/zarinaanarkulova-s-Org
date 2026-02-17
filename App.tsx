@@ -72,7 +72,6 @@ const App: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Faqat bazada mavjud bo'lgan snake_case ustun nomlarini ishlatamiz
       const { error } = await supabase
         .from('bullying_responses')
         .insert([{
@@ -120,7 +119,7 @@ const App: React.FC = () => {
       .neq('id', '00000000-0000-0000-0000-000000000000');
 
     if (error) {
-      alert('Ma\'lumotlarni o\'chirishda xatolik: ' + error.message);
+      alert('Ma\'mulotlarni o\'chirishda xatolik: ' + error.message);
     } else {
       setResponses([]);
       alert('Barcha ma\'lumotlar o\'chirildi');
@@ -130,32 +129,35 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="bg-white border-b py-8 px-4 text-center sticky top-0 z-50 glass-morphism">
-        <h1 className="text-xl md:text-3xl font-black text-blue-900 tracking-tighter uppercase mb-2">
+    <div className="min-h-screen flex flex-col bg-transparent">
+      <header className="bg-white/80 border-b border-white/40 py-6 px-4 text-center sticky top-0 z-50 glass-morphism">
+        <h1 className="text-xl md:text-2xl font-black text-blue-900 tracking-tight uppercase mb-1">
           {t.title}
         </h1>
-        <div className="h-1 w-24 bg-blue-600 mx-auto mb-3 rounded-full"></div>
-        <p className="text-gray-500 font-bold text-sm tracking-widest">{t.subtitle}</p>
+        <p className="text-blue-600 font-bold text-xs tracking-widest uppercase opacity-80">{t.subtitle}</p>
       </header>
 
       <main className="flex-grow container mx-auto p-4 md:p-8 flex items-center justify-center">
         {view === View.Home && (
-          <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-10 text-center space-y-8 border border-gray-100 fade-in">
-            <div className="w-24 h-24 bg-blue-600 rounded-3xl flex items-center justify-center mx-auto shadow-xl rotate-3">
-              <span className="text-4xl text-white">📊</span>
+          <div className="max-w-md w-full glass-morphism rounded-[2rem] shadow-2xl p-10 text-center space-y-8 border border-white/50 fade-in">
+            <div className="w-20 h-20 bg-blue-500 rounded-2xl flex items-center justify-center mx-auto shadow-lg shadow-blue-500/30">
+              <span className="text-4xl">🎓</span>
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-2xl font-bold text-gray-800">Xush kelibsiz!</h2>
+              <p className="text-gray-500 text-sm">Maktabda xavfsiz muhit yaratishga yordam bering</p>
             </div>
             <LanguageSelector current={lang} onSelect={setLang} />
             <div className="space-y-4 pt-4">
               <button
                 onClick={() => setView(View.Register)}
-                className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-xl hover:bg-blue-700 transition shadow-xl shadow-blue-100"
+                className="w-full btn-primary text-white py-4 rounded-xl font-bold text-lg"
               >
                 {t.startSurvey}
               </button>
               <button
                 onClick={() => setView(View.AdminLogin)}
-                className="w-full text-blue-600 font-bold py-3 hover:bg-blue-50 rounded-xl transition"
+                className="w-full text-blue-600 font-bold py-2 hover:bg-white/40 rounded-lg transition text-sm"
               >
                 {t.adminLogin}
               </button>
@@ -164,79 +166,81 @@ const App: React.FC = () => {
         )}
 
         {view === View.Register && (
-          <div className="max-w-2xl w-full bg-white rounded-3xl shadow-2xl p-10 fade-in border border-gray-100">
-            <h2 className="text-3xl font-black mb-8 text-gray-900 border-b pb-4">{t.registerTitle}</h2>
-            <form onSubmit={handleRegister} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="max-w-2xl w-full glass-morphism rounded-[2rem] shadow-2xl p-8 md:p-12 fade-in border border-white/50">
+            <h2 className="text-2xl font-black mb-8 text-gray-900 flex items-center gap-3">
+              <span className="text-blue-500">📝</span> {t.registerTitle}
+            </h2>
+            <form onSubmit={handleRegister} className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t.firstName}</label>
-                <input required name="firstName" className="w-full border-2 border-gray-100 rounded-xl p-4 focus:border-blue-500 outline-none transition" />
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">{t.firstName}</label>
+                <input required name="firstName" className="w-full bg-white/60 border border-white/60 rounded-xl p-3 focus:ring-2 focus:ring-blue-400 outline-none transition" />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t.lastName}</label>
-                <input required name="lastName" className="w-full border-2 border-gray-100 rounded-xl p-4 focus:border-blue-500 outline-none transition" />
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">{t.lastName}</label>
+                <input required name="lastName" className="w-full bg-white/60 border border-white/60 rounded-xl p-3 focus:ring-2 focus:ring-blue-400 outline-none transition" />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t.birthYear}</label>
-                <input required type="number" name="birthYear" placeholder="2010" className="w-full border-2 border-gray-100 rounded-xl p-4 focus:border-blue-500 outline-none transition" />
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">{t.birthYear}</label>
+                <input required type="number" name="birthYear" placeholder="2010" className="w-full bg-white/60 border border-white/60 rounded-xl p-3 focus:ring-2 focus:ring-blue-400 outline-none transition" />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t.schoolNumber}</label>
-                <input required name="schoolNumber" className="w-full border-2 border-gray-100 rounded-xl p-4 focus:border-blue-500 outline-none transition" />
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">{t.schoolNumber}</label>
+                <input required name="schoolNumber" className="w-full bg-white/60 border border-white/60 rounded-xl p-3 focus:ring-2 focus:ring-blue-400 outline-none transition" />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t.classNumber}</label>
-                <input required name="classNumber" className="w-full border-2 border-gray-100 rounded-xl p-4 focus:border-blue-500 outline-none transition" />
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">{t.classNumber}</label>
+                <input required name="classNumber" className="w-full bg-white/60 border border-white/60 rounded-xl p-3 focus:ring-2 focus:ring-blue-400 outline-none transition" />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t.classLetter}</label>
-                <input required name="classLetter" placeholder="A, B, C..." className="w-full border-2 border-gray-100 rounded-xl p-4 focus:border-blue-500 outline-none transition uppercase" />
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">{t.classLetter}</label>
+                <input required name="classLetter" placeholder="A, B, C..." className="w-full bg-white/60 border border-white/60 rounded-xl p-3 focus:ring-2 focus:ring-blue-400 outline-none transition uppercase" />
               </div>
-              <div className="md:col-span-2 pt-8 flex gap-6">
-                <button type="button" onClick={() => setView(View.Home)} className="flex-1 py-4 border-2 border-gray-100 rounded-2xl font-bold text-gray-500">{t.back}</button>
-                <button type="submit" className="flex-[2] bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-blue-100">{t.next}</button>
+              <div className="md:col-span-2 pt-6 flex gap-4">
+                <button type="button" onClick={() => setView(View.Home)} className="flex-1 py-3 border border-gray-300 rounded-xl font-bold text-gray-500 hover:bg-white/40 transition">{t.back}</button>
+                <button type="submit" className="flex-[2] btn-primary text-white py-3 rounded-xl font-bold shadow-lg">{t.next}</button>
               </div>
             </form>
           </div>
         )}
 
         {view === View.Survey && (
-          <div className="max-w-3xl w-full bg-white rounded-3xl shadow-2xl p-10 fade-in border border-gray-100">
-            <div className="mb-10">
-              <div className="flex justify-between items-center mb-3 text-xs font-black text-blue-600 uppercase tracking-widest">
-                <span>Progress</span>
+          <div className="max-w-3xl w-full glass-morphism rounded-[2rem] shadow-2xl p-8 md:p-10 fade-in border border-white/50">
+            <div className="mb-8">
+              <div className="flex justify-between items-center mb-2 text-[10px] font-black text-blue-600 uppercase tracking-widest">
+                <span>Savollar</span>
                 <span>{Math.round((Object.keys(currentAnswers).length / SURVEY_QUESTIONS.length) * 100)}%</span>
               </div>
-              <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-2 w-full bg-white/40 rounded-full overflow-hidden border border-white/40">
                 <div 
-                  className="h-full bg-blue-600 transition-all duration-500 shadow-[0_0_10px_rgba(37,99,235,0.3)]" 
+                  className="h-full bg-blue-500 transition-all duration-700 shadow-[0_0_15px_rgba(59,130,246,0.5)]" 
                   style={{ width: `${(Object.keys(currentAnswers).length / SURVEY_QUESTIONS.length) * 100}%` }}
                 ></div>
               </div>
             </div>
             
-            <div className="space-y-12 max-h-[60vh] overflow-y-auto pr-4 custom-scrollbar">
+            <div className="space-y-10 max-h-[55vh] overflow-y-auto pr-2 custom-scrollbar">
               {SURVEY_QUESTIONS.map((q, idx) => (
-                <div key={q.id} className="pb-12 border-b border-gray-50 last:border-0">
-                  <p className="text-lg font-bold text-gray-800 mb-6 leading-relaxed">
-                    <span className="text-blue-500 mr-2">{idx + 1}.</span>
+                <div key={q.id} className="pb-8 border-b border-gray-200/40 last:border-0">
+                  <p className="text-base font-bold text-gray-800 mb-5 leading-snug">
+                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 text-xs mr-3 font-black">{idx + 1}</span>
                     {q.text[lang]}
                   </p>
-                  <div className="grid grid-cols-5 gap-3">
+                  <div className="flex justify-between items-center gap-2">
                     {[0, 1, 2, 3, 4].map((score) => (
                       <button
                         key={score}
                         onClick={() => setCurrentAnswers(prev => ({ ...prev, [q.id]: score }))}
-                        className={`py-4 rounded-2xl border-2 font-black transition-all ${
+                        className={`flex-1 py-3 rounded-xl border-2 font-black text-sm transition-all ${
                           currentAnswers[q.id] === score 
-                          ? 'bg-blue-600 border-blue-600 text-white shadow-lg -translate-y-1' 
-                          : 'border-gray-100 text-gray-300 hover:border-blue-200 hover:text-blue-500'
+                          ? 'bg-blue-600 border-blue-600 text-white shadow-md scale-105' 
+                          : 'bg-white/40 border-white text-gray-400 hover:border-blue-200 hover:text-blue-400'
                         }`}
                       >
                         {score}
                       </button>
                     ))}
                   </div>
-                  <div className="flex justify-between mt-3 text-[10px] font-black text-gray-300 uppercase tracking-widest">
+                  <div className="flex justify-between mt-2 text-[9px] font-bold text-gray-400 uppercase tracking-wider px-1">
                     <span>{lang === 'uz' ? 'Hech qachon' : 'Никогда'}</span>
                     <span>{lang === 'uz' ? 'Har doim' : 'Всегда'}</span>
                   </div>
@@ -244,15 +248,15 @@ const App: React.FC = () => {
               ))}
             </div>
 
-            <div className="mt-12 flex gap-6">
-              <button onClick={() => setView(View.Register)} className="flex-1 border-2 py-4 rounded-2xl font-bold text-gray-500">{t.back}</button>
+            <div className="mt-8 flex gap-4">
+              <button onClick={() => setView(View.Register)} className="flex-1 border border-gray-300 py-3 rounded-xl font-bold text-gray-500 hover:bg-white/40 transition">{t.back}</button>
               <button 
                 onClick={handleSurveySubmit} 
                 disabled={Object.keys(currentAnswers).length < SURVEY_QUESTIONS.length || isLoading}
-                className={`flex-[2] py-4 rounded-2xl font-black text-white transition-all ${
+                className={`flex-[2] py-3 rounded-xl font-bold text-white transition-all shadow-lg ${
                   (Object.keys(currentAnswers).length < SURVEY_QUESTIONS.length || isLoading)
-                  ? 'bg-gray-200 cursor-not-allowed' 
-                  : 'bg-green-600 hover:bg-green-700 shadow-xl shadow-green-100'
+                  ? 'bg-gray-300 cursor-not-allowed text-gray-400' 
+                  : 'bg-green-500 hover:bg-green-600'
                 }`}
               >
                 {isLoading ? t.loading : t.submit}
@@ -262,23 +266,23 @@ const App: React.FC = () => {
         )}
 
         {view === View.AdminLogin && (
-          <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-10 fade-in border border-gray-100">
-            <h2 className="text-3xl font-black mb-8 text-gray-900 border-b pb-4">{t.adminLogin}</h2>
+          <div className="max-w-md w-full glass-morphism rounded-[2rem] shadow-2xl p-10 fade-in border border-white/50">
+            <h2 className="text-2xl font-black mb-8 text-gray-900 border-b border-gray-100 pb-4">{t.adminLogin}</h2>
             <form onSubmit={handleAdminLogin} className="space-y-6">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t.password}</label>
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">{t.password}</label>
                 <input 
                   type="password" 
                   value={adminPass}
                   onChange={(e) => setAdminPass(e.target.value)}
-                  className="w-full border-2 border-gray-100 rounded-xl p-4 focus:border-blue-500 outline-none transition"
+                  className="w-full bg-white/60 border border-white/60 rounded-xl p-4 focus:ring-2 focus:ring-blue-400 outline-none transition"
                   placeholder="••••••••"
                 />
               </div>
-              {error && <p className="text-red-500 text-sm font-bold text-center bg-red-50 p-3 rounded-xl">{error}</p>}
-              <div className="flex gap-4 pt-4">
-                <button type="button" onClick={() => setView(View.Home)} className="flex-1 border-2 py-4 rounded-2xl font-bold text-gray-500">{t.back}</button>
-                <button type="submit" className="flex-1 bg-gray-900 text-white py-4 rounded-2xl font-bold hover:bg-black transition">{t.next}</button>
+              {error && <p className="text-red-500 text-xs font-bold text-center bg-red-50 p-2 rounded-lg border border-red-100">{error}</p>}
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setView(View.Home)} className="flex-1 border border-gray-300 py-3 rounded-xl font-bold text-gray-500 hover:bg-white/40 transition">{t.back}</button>
+                <button type="submit" className="flex-1 bg-gray-800 text-white py-3 rounded-xl font-bold hover:bg-black transition shadow-lg">{t.next}</button>
               </div>
             </form>
           </div>
@@ -294,17 +298,16 @@ const App: React.FC = () => {
         )}
       </main>
 
-      <footer className="bg-white border-t py-12">
-        <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
+      <footer className="bg-white/60 backdrop-blur-md border-t border-white/30 py-8">
+        <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="text-center md:text-left">
-            <p className="font-black text-gray-900 text-lg">Admin: {ADMIN_INFO.name}</p>
-            <p className="text-blue-600 font-bold">{ADMIN_INFO.email}</p>
+            <p className="font-bold text-gray-800 text-sm">Admin: {ADMIN_INFO.name}</p>
+            <p className="text-blue-500 font-medium text-xs">{ADMIN_INFO.email}</p>
           </div>
-          <div className="text-center md:text-right space-y-1">
-            <p className="text-gray-400 font-bold text-xs tracking-widest uppercase">
+          <div className="text-center md:text-right space-y-1 opacity-60">
+            <p className="text-gray-500 font-bold text-[10px] tracking-widest uppercase">
               &copy; {new Date().getFullYear()} Guliston Davlat Pedagogika Instituti
             </p>
-            <p className="text-gray-300 text-[10px] font-black uppercase tracking-[0.2em]">Monitoring & Analysis</p>
           </div>
         </div>
       </footer>
