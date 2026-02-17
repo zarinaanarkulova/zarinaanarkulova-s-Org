@@ -1,11 +1,11 @@
-
 import { GoogleGenAI } from "@google/genai";
 import { SurveyResponse } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || "" });
-
 export const analyzeBullyingData = async (responses: SurveyResponse[], language: 'uz' | 'ru') => {
-  if (responses.length === 0) return "No data to analyze.";
+  if (responses.length === 0) return language === 'uz' ? "Tahlil qilish uchun ma'lumotlar mavjud emas." : "Нет данных для анализа.";
+
+  // Har safar yangi instance yaratish eng so'nggi API_KEY ishlatilishini ta'minlaydi
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || "" });
 
   const summary = responses.map(r => ({
     school: r.user.schoolNumber,
@@ -34,9 +34,12 @@ export const analyzeBullyingData = async (responses: SurveyResponse[], language:
       model: 'gemini-3-flash-preview',
       contents: prompt,
     });
-    return response.text;
+    
+    return response.text || (language === 'uz' ? "Tahlil natijasi bo'sh qaytdi." : "Результат анализа пуст.");
   } catch (error) {
     console.error("AI Analysis Error:", error);
-    return "Xatolik yuz berdi. Iltimos keyinroq urunib ko'ring.";
+    return language === 'uz' 
+      ? "AI tahlili vaqtida xatolik yuz berdi. API kaliti to'g'ri sozlanganligini tekshiring." 
+      : "Произошла ошибка при AI анализе. Проверьте настройки API ключа.";
   }
 };
