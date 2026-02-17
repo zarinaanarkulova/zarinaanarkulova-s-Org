@@ -1,17 +1,18 @@
 
 import { GoogleGenAI } from "@google/genai";
-import { SurveyResponse } from "../types";
+import { SurveyResponse, Question } from "../types";
+import { SURVEY_QUESTIONS, RESPONSE_LABELS } from "../constants";
+
+const getAiInstance = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const analyzeBullyingData = async (responses: SurveyResponse[], language: 'uz' | 'ru') => {
   if (responses.length === 0) return language === 'uz' ? "Tahlil qilish uchun ma'lumotlar mavjud emas." : "Нет данных для анализа.";
 
-  // Fix: Initializing GoogleGenAI correctly using process.env.API_KEY directly as per requirements
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = getAiInstance();
 
   const summary = responses.map(r => ({
     school: r.user.schoolNumber,
     class: `${r.user.classNumber}-${r.user.classLetter}`,
-    // Fix: Explicitly cast Object.values to number[] and type reduce parameters to resolve TS unknown error
     avgScore: (Object.values(r.answers) as number[]).reduce((a: number, b: number) => a + b, 0) / (Object.values(r.answers).length || 1)
   }));
 
@@ -32,18 +33,53 @@ export const analyzeBullyingData = async (responses: SurveyResponse[], language:
   `;
 
   try {
-    // Fix: Using gemini-3-pro-preview for advanced reasoning/analysis task as per guidelines
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: prompt,
     });
-    
-    // Fix: Access .text property directly (it is a property, not a method)
     return response.text || (language === 'uz' ? "Tahlil natijasi bo'sh qaytdi." : "Результат анализа пуст.");
   } catch (error) {
     console.error("AI Analysis Error:", error);
     return language === 'uz' 
-      ? "AI tahlili vaqtida xatolik yuz berdi. API kaliti to'g'ri sozlanganligini tekshiring." 
-      : "Произошла ошибка при AI анализе. Проверьте настройки API ключа.";
+      ? "AI tahlili vaqtida xatolik yuz berdi." 
+      : "Произошла ошибка при AI анализе.";
+  }
+};
+
+export const analyzeIndividualResponse = async (response: SurveyResponse, language: 'uz' | 'ru') => {
+  const ai = getAiInstance();
+  
+  // Savollar va javoblarni matn ko'rinishiga o'tkazish
+  const QandA = SURVEY_QUESTIONS.map(q => ({
+    question: q.text[language],
+    answer: RESPONSE_LABELS[language][response.answers[q.id]] || 'Javob berilmagan'
+  }));
+
+  const prompt = `
+    Siz professional maktab psixologi va pedagogik ekspertsiz. 
+    Quyidagi o'quvchining so'rovnomadagi javoblarini tahlil qiling:
+    O'quvchi: ${response.user.firstName} ${response.user.lastName}, ${response.user.classNumber}-sinf.
+    
+    Javoblar:
+    ${JSON.stringify(QandA)}
+    
+    Vazifangiz:
+    1. O'quvchining ruhiy holati va bulling xavfi darajasini baholang.
+    2. Aynan shu o'quvchi uchun mos keladigan psixologik-pedagogik metodlarni (masalan, treninglar, suhbat metodikasi, art-terapiya va h.k.) tavsiya qiling.
+    3. O'qituvchilar va ota-onalar uchun individual harakatlar rejasini tuzing.
+    
+    Javob tili: ${language === 'uz' ? 'O\'zbek tili' : 'Rus tili'}.
+    Format: Markdown (Sarlavhalar va ro'yxatlar bilan chiroyli formatlangan bo'lsin).
+  `;
+
+  try {
+    const res = await ai.models.generateContent({
+      model: 'gemini-3-pro-preview',
+      contents: prompt,
+    });
+    return res.text || "Xulosa generatsiya qilinmadi.";
+  } catch (error) {
+    console.error("Individual AI Analysis Error:", error);
+    return language === 'uz' ? "Xatolik yuz berdi." : "Произошла ошибка.";
   }
 };
