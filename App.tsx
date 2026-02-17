@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { View, Language, UserRegistration, SurveyResponse } from './types';
-import { TRANSLATIONS, ADMIN_INFO, SURVEY_QUESTIONS, ADMIN_PASSWORD } from './constants';
+import { TRANSLATIONS, ADMIN_INFO, SURVEY_QUESTIONS, ADMIN_PASSWORD, RESPONSE_LABELS } from './constants';
 import { LanguageSelector } from './components/LanguageSelector';
 import { AdminDashboard } from './components/AdminDashboard';
 import { supabase } from './services/supabaseClient';
@@ -27,9 +27,10 @@ const App: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (sbError) {
-        console.error('Supabase xatosi:', sbError);
-        setError(`Ma'lumotlar bazasi bilan aloqa xatosi: ${sbError.message}`);
-      } else if (data) {
+        throw sbError;
+      } 
+      
+      if (data) {
         const mapped: SurveyResponse[] = data.map(row => ({
           id: row.id,
           timestamp: new Date(row.created_at).getTime(),
@@ -41,13 +42,16 @@ const App: React.FC = () => {
             classNumber: row.class_number,
             classLetter: row.class_letter,
           } as UserRegistration,
-          answers: row.answers,
+          answers: row.answers || {},
         }));
         setResponses(mapped);
         setError('');
+      } else {
+        setResponses([]);
       }
     } catch (err: any) {
-      console.error('Kutilmagan xato:', err);
+      console.error('Bazadan yuklashda xato:', err);
+      setError(`Ma'lumotlar bazasi xatosi: ${err.message || 'Noma\'lum xatolik'}`);
     } finally {
       setIsLoading(false);
     }
@@ -95,18 +99,39 @@ const App: React.FC = () => {
           answers: currentAnswers
         }]);
 
-      if (sbError) {
-        console.error('Yuborishda xatolik:', sbError);
-        alert(`Ma'lumot saqlanmadi: ${sbError.message}`);
-      } else {
-        alert(t.thankYou);
-        await fetchResponses();
-        setView(View.Home);
-        setUserData(null);
-        setCurrentAnswers({});
-      }
+      if (sbError) throw sbError;
+
+      alert(t.thankYou);
+      await fetchResponses();
+      setView(View.Home);
+      setUserData(null);
+      setCurrentAnswers({});
     } catch (err: any) {
-      alert(`Xatolik yuz berdi: ${err.message}`);
+      console.error('Yuborishda xato:', err);
+      alert(`Ma'lumot saqlanmadi: ${err.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleClearData = async () => {
+    if (!confirm(t.confirmDelete)) return;
+    
+    setIsLoading(true);
+    try {
+      // Barcha qatorlarni o'chirish uchun filtrsiz delete ishlatiladi (faqat test yoki admin uchun)
+      const { error: sbError } = await supabase
+        .from('bullying_responses')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); 
+
+      if (sbError) throw sbError;
+      
+      alert(lang === 'uz' ? "Barcha ma'lumotlar o'chirildi" : "Все данные удалены");
+      await fetchResponses();
+    } catch (err: any) {
+      console.error('O\'chirishda xato:', err);
+      alert(`O'chirishda xatolik yuz berdi: ${err.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -133,7 +158,7 @@ const App: React.FC = () => {
       </header>
 
       {error && (
-        <div className="bg-red-500 text-white text-center py-2 font-bold text-xs animate-pulse">
+        <div className="bg-red-500 text-white text-center py-2 font-bold text-xs animate-pulse sticky top-[100px] z-[60]">
           {error}
         </div>
       )}
@@ -222,18 +247,18 @@ const App: React.FC = () => {
                     <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 text-xs mr-3 font-black">{idx + 1}</span>
                     {q.text[lang]}
                   </p>
-                  <div className="flex justify-between items-center gap-2">
-                    {[0, 1, 2, 3, 4].map((score) => (
+                  <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
+                    {RESPONSE_LABELS[lang].map((label, score) => (
                       <button
                         key={score}
                         onClick={() => setCurrentAnswers(prev => ({ ...prev, [q.id]: score }))}
-                        className={`flex-1 py-4 rounded-xl border-2 font-black text-sm transition-all ${
+                        className={`py-4 px-2 rounded-xl border-2 font-bold text-xs md:text-sm transition-all text-center leading-tight ${
                           currentAnswers[q.id] === score 
                           ? 'bg-blue-600 border-blue-600 text-white shadow-md scale-105' 
                           : 'bg-white border-gray-100 text-gray-400 hover:border-blue-200 hover:text-blue-400 shadow-sm'
                         }`}
                       >
-                        {score}
+                        {label}
                       </button>
                     ))}
                   </div>
@@ -288,7 +313,7 @@ const App: React.FC = () => {
           <AdminDashboard 
             data={responses} 
             lang={lang} 
-            onClear={() => { fetchResponses(); }} 
+            onClear={handleClearData} 
             onRefresh={fetchResponses}
             isLoading={isLoading}
             onLogout={() => { setView(View.Home); setAdminPass(''); }} 

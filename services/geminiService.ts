@@ -5,7 +5,7 @@ import { SurveyResponse } from "../types";
 export const analyzeBullyingData = async (responses: SurveyResponse[], language: 'uz' | 'ru') => {
   if (responses.length === 0) return language === 'uz' ? "Tahlil qilish uchun ma'lumotlar mavjud emas." : "Нет данных для анализа.";
 
-  // Fix: Initialize GoogleGenAI correctly using process.env.API_KEY directly as per requirements
+  // Fix: Initializing GoogleGenAI correctly using process.env.API_KEY directly as per requirements
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   const summary = responses.map(r => ({
@@ -32,12 +32,13 @@ export const analyzeBullyingData = async (responses: SurveyResponse[], language:
   `;
 
   try {
+    // Fix: Using gemini-3-pro-preview for advanced reasoning/analysis task as per guidelines
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-3-pro-preview',
       contents: prompt,
     });
     
-    // Fix: Access .text property directly
+    // Fix: Access .text property directly (it is a property, not a method)
     return response.text || (language === 'uz' ? "Tahlil natijasi bo'sh qaytdi." : "Результат анализа пуст.");
   } catch (error) {
     console.error("AI Analysis Error:", error);

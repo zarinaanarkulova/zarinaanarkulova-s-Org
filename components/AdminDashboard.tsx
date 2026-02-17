@@ -371,12 +371,15 @@ export const AdminDashboard: React.FC<Props> = ({ data, lang, onClear, onRefresh
                   <div key={q.id} className="p-6 bg-white border border-gray-100 rounded-2xl shadow-sm">
                     <p className="text-sm font-bold text-gray-600 mb-4 leading-relaxed">{q.text[lang]}</p>
                     <div className="flex items-center gap-4">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-white ${selectedResponse.answers[q.id] >= 3 ? 'bg-red-500' : 'bg-blue-600'}`}>
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-white ${selectedResponse.answers[q.id] >= 3 ? 'bg-red-500' : 'bg-blue-600'} flex-shrink-0`}>
                         {selectedResponse.answers[q.id]}
                       </div>
-                      <span className="font-black text-gray-900 uppercase text-xs tracking-tighter">
-                        {RESPONSE_LABELS[lang][selectedResponse.answers[q.id]]}
-                      </span>
+                      <div className="flex flex-col">
+                        <span className="font-black text-gray-900 uppercase text-sm tracking-tighter">
+                          {RESPONSE_LABELS[lang][selectedResponse.answers[q.id]]}
+                        </span>
+                        <span className="text-[10px] text-gray-400 font-bold uppercase">Javob varianti</span>
+                      </div>
                     </div>
                   </div>
                 ))}
