@@ -4,7 +4,7 @@ import { SurveyResponse } from "../types";
 export const analyzeBullyingData = async (responses: SurveyResponse[], language: 'uz' | 'ru') => {
   if (responses.length === 0) return language === 'uz' ? "Tahlil qilish uchun ma'lumotlar mavjud emas." : "Нет данных для анализа.";
 
-  // Har safar yangi instance yaratish eng so'nggi API_KEY ishlatilishini ta'minlaydi
+  // Initialize with process.env.API_KEY as injected by vite.config.ts
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || "" });
 
   const summary = responses.map(r => ({
@@ -26,7 +26,7 @@ export const analyzeBullyingData = async (responses: SurveyResponse[], language:
     4. Recommendations for psychological support.
     
     Response language: ${language === 'uz' ? 'Uzbek' : 'Russian'}.
-    Format: Professional educational report.
+    Format: Professional educational report in Markdown.
   `;
 
   try {
