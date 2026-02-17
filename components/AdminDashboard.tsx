@@ -23,52 +23,82 @@ export const AdminDashboard: React.FC<Props> = ({ data, lang, onClear, onRefresh
   
   const t = TRANSLATIONS[lang];
 
-  // Word faylga eksport qilish funksiyasi
-  const exportToWord = (content: string, filename: string) => {
-    // Markdown formatini sodda HTMLga o'tkazish (Word yaxshi o'qishi uchun)
+  /**
+   * AI tahlilini Microsoft Word (.doc) formatiga eksport qilish
+   */
+  const exportToWord = (content: string, filename: string, titleSuffix: string = "") => {
+    // Markdown'ni Word tushunadigan HTML formatiga o'tkazish
     const formattedContent = content
-      .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-      .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-      .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+      .replace(/^# (.*$)/gim, '<h1 style="color: #1e40af; font-family: Arial;">$1</h1>')
+      .replace(/^## (.*$)/gim, '<h2 style="color: #1e40af; margin-top: 20px;">$1</h2>')
+      .replace(/^### (.*$)/gim, '<h3 style="color: #1e3a8a;">$1</h3>')
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/\n/g, '<br/>');
+      .replace(/\n/g, '<br/>')
+      .replace(/- (.*)/g, '<li>$1</li>');
 
-    const html = `
+    const htmlContent = `
       <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-      <head><meta charset='utf-8'><style>body{font-family: 'Times New Roman', serif; line-height: 1.6;}</style></head>
+      <head>
+        <meta charset='utf-8'>
+        <style>
+          body { font-family: 'Times New Roman', serif; line-height: 1.6; color: #333; }
+          h1, h2, h3 { font-family: Arial, sans-serif; }
+          .header { text-align: center; border-bottom: 2px solid #2563eb; padding-bottom: 10px; margin-bottom: 20px; }
+          .footer { margin-top: 40px; font-size: 9pt; color: #666; border-top: 1px solid #eee; padding-top: 10px; }
+          li { margin-bottom: 5px; }
+        </style>
+      </head>
       <body>
-        <h1 style="text-align:center; color: #2563eb;">${t.title}</h1>
-        <h3 style="text-align:center;">AI Tahlil va Tavsiyalar Xulosasi</h3>
-        <hr/>
-        <div>${formattedContent}</div>
-        <p style="margin-top: 50px; font-size: 10pt; color: gray;">Sana: ${new Date().toLocaleString()}</p>
+        <div class="header">
+          <h1 style="margin-bottom: 5px;">${t.title}</h1>
+          <p style="font-weight: bold; color: #2563eb;">AI MONITORING VA TAHLIL TIZIMI</p>
+        </div>
+        <div style="margin-bottom: 20px;">
+          <h2 style="text-align: center;">${titleSuffix || "Xulosa va Tavsiyalar"}</h2>
+        </div>
+        <div class="content">
+          ${formattedContent}
+        </div>
+        <div class="footer">
+          <p>Ushbu hisobot Gemini AI platformasi yordamida generatsiya qilindi.</p>
+          <p>Sana: ${new Date().toLocaleString('uz-UZ')}</p>
+        </div>
       </body>
       </html>
     `;
 
-    const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+    const blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${filename}.doc`;
+    link.download = `${filename}_${new Date().toISOString().split('T')[0]}.doc`;
     link.click();
     URL.revokeObjectURL(url);
   };
 
-  // Ulashish funksiyasi
+  /**
+   * Tahlil natijasini ulashish (Share API)
+   */
   const shareContent = async (text: string, title: string) => {
+    // Markdown simvollarini tozalash (faqat matn qolishi uchun)
+    const cleanText = text.replace(/[#*]/g, '');
+    
     if (navigator.share) {
       try {
         await navigator.share({
           title: title,
-          text: text,
+          text: cleanText,
+          url: window.location.href
         });
       } catch (err) {
-        console.error("Ulashishda xato:", err);
+        if ((err as Error).name !== 'AbortError') {
+          console.error("Ulashishda xato:", err);
+        }
       }
     } else {
-      navigator.clipboard.writeText(text);
+      // Agar Web Share API mavjud bo'lmasa, nusxa ko'chirish
+      navigator.clipboard.writeText(cleanText);
       alert(t.copied);
     }
   };
@@ -152,6 +182,7 @@ export const AdminDashboard: React.FC<Props> = ({ data, lang, onClear, onRefresh
 
   return (
     <div className="max-w-7xl mx-auto p-4 space-y-10 pb-32 fade-in">
+      {/* Dashboard Header */}
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center glass-morphism p-10 rounded-[2.5rem] shadow-xl border border-white/50 gap-6">
         <div>
           <h2 className="text-4xl font-black text-gray-900 leading-tight">{t.adminPanel}</h2>
@@ -161,12 +192,13 @@ export const AdminDashboard: React.FC<Props> = ({ data, lang, onClear, onRefresh
           </div>
         </div>
         <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-4 w-full xl:w-auto">
-          <button onClick={onRefresh} className="px-6 py-4 bg-blue-100 text-blue-600 rounded-2xl font-bold hover:bg-blue-200 transition">🔄</button>
+          <button onClick={onRefresh} className="px-6 py-4 bg-blue-100 text-blue-600 rounded-2xl font-bold hover:bg-blue-200 transition" title="Yangilash">🔄</button>
           <button onClick={onLogout} className="px-6 py-4 bg-white/50 border border-gray-200 rounded-2xl font-bold text-gray-600 hover:bg-white transition">{t.back}</button>
           <button onClick={onClear} className="px-8 py-4 bg-red-500 text-white rounded-2xl font-bold hover:bg-red-600 transition shadow-lg shadow-red-200">{t.deleteData}</button>
         </div>
       </div>
 
+      {/* Visual Stats */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="glass-morphism p-8 rounded-[2.5rem] shadow-lg border border-white/50">
           <h3 className="text-lg font-black mb-6 text-gray-800 border-l-4 border-blue-500 pl-4 uppercase tracking-tighter">{t.bullyingRisk} (Sinflar)</h3>
@@ -197,6 +229,7 @@ export const AdminDashboard: React.FC<Props> = ({ data, lang, onClear, onRefresh
         </div>
       </div>
 
+      {/* Participants Table */}
       <div className="glass-morphism rounded-[2.5rem] shadow-xl border border-white/50 overflow-hidden">
         <div className="p-10 border-b flex justify-between items-center bg-white/30">
           <h3 className="text-2xl font-black text-gray-900">{t.participants}</h3>
@@ -237,6 +270,7 @@ export const AdminDashboard: React.FC<Props> = ({ data, lang, onClear, onRefresh
         </div>
       </div>
 
+      {/* Global AI Analysis Section */}
       <div className="glass-morphism p-10 rounded-[2.5rem] shadow-xl border border-white/50">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
           <h3 className="text-3xl font-black text-gray-900 flex items-center gap-4">
@@ -254,30 +288,31 @@ export const AdminDashboard: React.FC<Props> = ({ data, lang, onClear, onRefresh
             {aiAnalysis && (
               <>
                 <button 
-                  onClick={() => exportToWord(aiAnalysis, "Umumiy_AI_Tahlil")}
-                  className="px-6 py-4 bg-blue-100 text-blue-600 rounded-2xl font-bold hover:bg-blue-200 transition"
-                  title="Wordda yuklash"
+                  onClick={() => exportToWord(aiAnalysis, "Umumiy_AI_Tahlil", "Umumiy Maktab Monitoringi")}
+                  className="px-6 py-4 bg-blue-100 text-blue-600 rounded-2xl font-bold hover:bg-blue-200 transition-all flex items-center gap-2"
+                  title={t.exportData}
                 >
-                  📄
+                  <span className="text-xl">📄</span> <span className="hidden sm:inline">Word</span>
                 </button>
                 <button 
-                  onClick={() => shareContent(aiAnalysis, "Umumiy AI Tahlil Xulosasi")}
-                  className="px-6 py-4 bg-emerald-100 text-emerald-600 rounded-2xl font-bold hover:bg-emerald-200 transition"
-                  title="Ulashish"
+                  onClick={() => shareContent(aiAnalysis, "Maktab Monitoringi AI Xulosasi")}
+                  className="px-6 py-4 bg-emerald-100 text-emerald-600 rounded-2xl font-bold hover:bg-emerald-200 transition-all flex items-center gap-2"
+                  title={t.share}
                 >
-                  📤
+                  <span className="text-xl">📤</span> <span className="hidden sm:inline">{t.share}</span>
                 </button>
               </>
             )}
           </div>
         </div>
         {aiAnalysis && (
-          <div className="prose max-w-none bg-white/40 p-10 rounded-[2rem] border border-white/60 whitespace-pre-wrap text-gray-800 font-medium fade-in shadow-inner">
+          <div className="prose max-w-none bg-white/40 p-10 rounded-[2rem] border border-white/60 whitespace-pre-wrap text-gray-800 font-medium fade-in shadow-inner overflow-y-auto max-h-[600px] custom-scrollbar">
             {aiAnalysis}
           </div>
         )}
       </div>
 
+      {/* Detail Modal */}
       {selectedResponse && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-md fade-in">
           <div className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col border border-white/20">
@@ -290,7 +325,7 @@ export const AdminDashboard: React.FC<Props> = ({ data, lang, onClear, onRefresh
             </div>
             
             <div className="p-10 overflow-y-auto space-y-8 custom-scrollbar">
-              <div className="grid grid-cols-2 gap-6 bg-blue-50/50 p-8 rounded-3xl border border-blue-100">
+              <div className="grid grid-cols-2 gap-6 bg-blue-50/50 p-8 rounded-3xl border border-blue-100 shadow-sm">
                 <div className="space-y-1">
                   <span className="font-black text-gray-400 uppercase text-[10px] block tracking-widest">Maktab</span> 
                   <span className="text-lg font-black text-blue-900">{selectedResponse.user.schoolNumber}-maktab</span>
@@ -301,6 +336,7 @@ export const AdminDashboard: React.FC<Props> = ({ data, lang, onClear, onRefresh
                 </div>
               </div>
 
+              {/* Individual AI Analysis Button and Actions */}
               <div className="space-y-4">
                 <div className="flex gap-2">
                   <button
@@ -314,14 +350,16 @@ export const AdminDashboard: React.FC<Props> = ({ data, lang, onClear, onRefresh
                   {individualAiResult && (
                     <>
                       <button 
-                        onClick={() => exportToWord(individualAiResult, `${selectedResponse.user.firstName}_Tahlil`)}
+                        onClick={() => exportToWord(individualAiResult, `${selectedResponse.user.firstName}_Xulosa`, `${selectedResponse.user.firstName} uchun Individual Psixologik Tavsiyalar`)}
                         className="px-6 py-5 bg-blue-50 text-blue-600 rounded-2xl font-bold hover:bg-blue-100 transition border border-blue-100"
+                        title="Word faylda yuklash"
                       >
                         📄
                       </button>
                       <button 
                         onClick={() => shareContent(individualAiResult, `${selectedResponse.user.firstName} uchun tahlil xulosasi`)}
                         className="px-6 py-5 bg-emerald-50 text-emerald-600 rounded-2xl font-bold hover:bg-emerald-100 transition border border-emerald-100"
+                        title="Ulashish"
                       >
                         📤
                       </button>
@@ -339,10 +377,11 @@ export const AdminDashboard: React.FC<Props> = ({ data, lang, onClear, onRefresh
                 )}
               </div>
 
+              {/* Questions detail */}
               <div className="space-y-6">
                 <h4 className="font-black text-gray-900 uppercase tracking-widest text-xs ml-1">Javoblar tafsiloti</h4>
                 {SURVEY_QUESTIONS.map((q) => (
-                  <div key={q.id} className="p-6 bg-white border border-gray-100 rounded-2xl shadow-sm">
+                  <div key={q.id} className="p-6 bg-white border border-gray-100 rounded-2xl shadow-sm hover:border-blue-200 transition-all">
                     <p className="text-sm font-bold text-gray-600 mb-4">{q.text[lang]}</p>
                     <div className="flex items-center gap-4">
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-white ${selectedResponse.answers[q.id] >= 3 ? 'bg-red-500' : 'bg-blue-600'}`}>
@@ -356,6 +395,7 @@ export const AdminDashboard: React.FC<Props> = ({ data, lang, onClear, onRefresh
                 ))}
               </div>
             </div>
+            
             <div className="p-10 border-t bg-gray-50/50">
               <button onClick={closeModal} className="w-full py-5 bg-gray-900 text-white rounded-2xl font-black hover:bg-black transition-all">
                 {t.close}
