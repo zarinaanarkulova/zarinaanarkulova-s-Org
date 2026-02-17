@@ -19,32 +19,33 @@ const App: React.FC = () => {
   const t = TRANSLATIONS[lang];
 
   const fetchResponses = async () => {
-    setIsLoading(true);
-    const { data, error } = await supabase
-      .from('bullying_responses')
-      .select('*')
-      .order('created_at', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('bullying_responses')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error('Error fetching data:', error);
-    } else if (data) {
-      const mapped: SurveyResponse[] = data.map(row => ({
-        id: row.id,
-        timestamp: new Date(row.created_at).getTime(),
-        user: {
-          firstName: row.first_name,
-          lastName: row.last_name,
-          birthYear: row.birth_year,
-          schoolNumber: row.school_number,
-          classNumber: row.class_number,
-          class_letter: row.class_letter, // backend might use different snake_case, ensuring mapping
-          classLetter: row.class_letter,
-        } as UserRegistration,
-        answers: row.answers,
-      }));
-      setResponses(mapped);
+      if (error) throw error;
+
+      if (data) {
+        const mapped: SurveyResponse[] = data.map(row => ({
+          id: row.id,
+          timestamp: new Date(row.created_at).getTime(),
+          user: {
+            firstName: row.first_name,
+            lastName: row.last_name,
+            birthYear: row.birth_year,
+            schoolNumber: row.school_number,
+            classNumber: row.class_number,
+            classLetter: row.class_letter,
+          } as UserRegistration,
+          answers: row.answers,
+        }));
+        setResponses(mapped);
+      }
+    } catch (err: any) {
+      console.error('Data fetch error:', err);
     }
-    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -70,28 +71,36 @@ const App: React.FC = () => {
     if (!userData) return;
     setIsLoading(true);
 
-    const { error } = await supabase
-      .from('bullying_responses')
-      .insert([{
-        first_name: userData.firstName,
-        last_name: userData.lastName,
-        birth_year: userData.birthYear,
-        school_number: userData.schoolNumber,
-        class_number: userData.classNumber,
-        class_letter: userData.classLetter,
-        answers: currentAnswers
-      }]);
+    try {
+      const { data, error } = await supabase
+        .from('bullying_responses')
+        .insert([{
+          first_name: userData.firstName,
+          lastName: userData.lastName, // Ensure your DB columns match!
+          last_name: userData.lastName,
+          birth_year: userData.birthYear,
+          school_number: userData.schoolNumber,
+          class_number: userData.classNumber,
+          class_letter: userData.classLetter,
+          answers: currentAnswers
+        }])
+        .select();
 
-    if (error) {
-      alert('Xatolik yuz berdi: ' + error.message);
-    } else {
-      alert(t.thankYou);
-      await fetchResponses();
-      setView(View.Home);
-      setUserData(null);
-      setCurrentAnswers({});
+      if (error) {
+        console.error('Supabase insert error:', error);
+        alert(`Xatolik: ${error.message}\nKodi: ${error.code}`);
+      } else {
+        alert(t.thankYou);
+        await fetchResponses();
+        setView(View.Home);
+        setUserData(null);
+        setCurrentAnswers({});
+      }
+    } catch (err: any) {
+      alert(`Kutilmagan xato: ${err.message}`);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleAdminLogin = (e: React.FormEvent) => {
@@ -112,10 +121,10 @@ const App: React.FC = () => {
       .neq('id', '00000000-0000-0000-0000-000000000000');
 
     if (error) {
-      alert('Ma\'lumotlarni o\'chirishda xatolik: ' + error.message);
+      alert('Ma\'mulotlarni o\'chirishda xatolik: ' + error.message);
     } else {
       setResponses([]);
-      setView(View.Home);
+      alert('Barcha ma\'lumotlar o\'chirildi');
     }
     setIsLoading(false);
   };
