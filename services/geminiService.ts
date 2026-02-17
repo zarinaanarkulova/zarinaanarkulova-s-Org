@@ -17,7 +17,7 @@ export const analyzeBullyingData = async (responses: SurveyResponse[], language:
     Analyze the following school bullying survey data summary:
     ${JSON.stringify(summary)}
     
-    The average scores are on a scale of 0 to 4, where higher scores might indicate higher exposure or risk of bullying (depending on the question).
+    The average scores are on a scale of 0 to 4, where higher scores might indicate higher exposure or risk of bullying.
     
     Please provide:
     1. A general overview of the situation.
