@@ -106,7 +106,7 @@ export const TRANSLATIONS = {
     adminPanel: 'Admin Paneli',
     statistics: 'Statistika',
     aiAnalysis: 'AI Tahlili',
-    participants: 'Ishtirokchilar',
+    participants: 'Ishtirokchilar (Xavf bo\'yicha tartiblangan)',
     noData: 'Ma\'lumotlar mavjud emas',
     totalSurveys: 'Jami so\'rovnomalar',
     bullyingRisk: 'Xavf darajasi',
@@ -117,7 +117,17 @@ export const TRANSLATIONS = {
     thankYou: 'Rahmat! Ma\'lumotlaringiz muvaffaqiyatli saqlandi.',
     viewDetails: 'Ko\'rish',
     detailsTitle: 'Ishtirokchi javoblari',
-    close: 'Yopish'
+    close: 'Yopish',
+    riskLevel: 'Xavf darajasi',
+    highRisk: 'Yuqori',
+    mediumRisk: 'O\'rta',
+    lowRisk: 'Past',
+    date: 'Sana',
+    activity: 'Kunlik faollik',
+    submissionDate: 'Yuborilgan vaqt',
+    exportData: 'Wordda yuklash (DOC)',
+    share: 'Ulashish',
+    copied: 'Nusxalandi!'
   },
   ru: {
     title: 'ГУЛИСТАНСКИЙ ГОСУДАРСТВЕННЫЙ ПЕДАГОГИЧЕСКИЙ ИНСТИТУТ',
@@ -139,7 +149,7 @@ export const TRANSLATIONS = {
     adminPanel: 'Панель администратора',
     statistics: 'Статистика',
     aiAnalysis: 'AI Анализ',
-    participants: 'Участники',
+    participants: 'Участники (По уровню риска)',
     noData: 'Нет данных',
     totalSurveys: 'Всего опросов',
     bullyingRisk: 'Уровень риска',
@@ -150,6 +160,16 @@ export const TRANSLATIONS = {
     thankYou: 'Спасибо! Ваши данные успешно сохранены.',
     viewDetails: 'Смотреть',
     detailsTitle: 'Ответы участника',
-    close: 'Закрыть'
+    close: 'Закрыть',
+    riskLevel: 'Уровень риска',
+    highRisk: 'Высокий',
+    mediumRisk: 'Средний',
+    lowRisk: 'Низкий',
+    date: 'Дата',
+    activity: 'Дневная активность',
+    submissionDate: 'Время отправки',
+    exportData: 'Скачать в Word (DOC)',
+    share: 'Поделиться',
+    copied: 'Скопировано!'
   }
 };
