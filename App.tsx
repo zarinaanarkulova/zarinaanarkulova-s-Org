@@ -72,19 +72,18 @@ const App: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase
+      // Faqat bazada mavjud bo'lgan snake_case ustun nomlarini ishlatamiz
+      const { error } = await supabase
         .from('bullying_responses')
         .insert([{
           first_name: userData.firstName,
-          lastName: userData.lastName, // Ensure your DB columns match!
           last_name: userData.lastName,
           birth_year: userData.birthYear,
           school_number: userData.schoolNumber,
           class_number: userData.classNumber,
           class_letter: userData.classLetter,
           answers: currentAnswers
-        }])
-        .select();
+        }]);
 
       if (error) {
         console.error('Supabase insert error:', error);
@@ -121,10 +120,11 @@ const App: React.FC = () => {
       .neq('id', '00000000-0000-0000-0000-000000000000');
 
     if (error) {
-      alert('Ma\'mulotlarni o\'chirishda xatolik: ' + error.message);
+      alert('Ma\'lumotlarni o\'chirishda xatolik: ' + error.message);
     } else {
       setResponses([]);
       alert('Barcha ma\'lumotlar o\'chirildi');
+      setView(View.Home);
     }
     setIsLoading(false);
   };
