@@ -11,58 +11,84 @@ export const SURVEY_QUESTIONS: Question[] = [
   {
     id: 'q1',
     text: {
-      uz: 'Maktabda o\'zingizni xavfsiz his qilasizmi?',
-      ru: 'Чувствуете ли вы себя в безопасности в школе?'
+      uz: 'Maktab hududida o\'zingizni xavfsiz va xotirjam his qilasizmi?',
+      ru: 'Чувствуете ли вы себя в безопасности и спокойно на территории школы?'
     }
   },
   {
     id: 'q2',
     text: {
-      uz: 'Boshqa o\'quvchilar sizni tez-tez masxara qilishadimi?',
-      ru: 'Часто ли другие ученики насмехаются над вами?'
+      uz: 'Tengdoshlaringiz tomonidan kamsitish yoki nohaq munosabatga duch kelasizmi?',
+      ru: 'Сталкиваетесь ли вы с дискриминацией или несправедливым отношением со стороны сверстников?'
     }
   },
   {
     id: 'q3',
     text: {
-      uz: 'Sizga nisbatan jismoniy kuch ishlatilganmi?',
-      ru: 'Применялась ли к вам физическая сила?'
+      uz: 'O\'zingizga yoqmagan bo\'lsa-da, guruh qoidalariga bo\'ysunishga majbur bo\'lasizmi?',
+      ru: 'Приходится ли вам подчиняться правилам группы, даже если они вам не нравятся?'
     }
   },
   {
     id: 'q4',
     text: {
-      uz: 'Ijtimoiy tarmoqlarda siz haqingizda yomon gaplar tarqatishganmi?',
-      ru: 'Распространяли ли о вас плохие слухи в социальных сетях?'
+      uz: 'Sog\'lig\'ingiz uchun zararli bo\'lgan tutunli yoki bug\'li vositalardan foydalanishga qiziqasizmi?',
+      ru: 'Интересуетесь ли вы использованием дымных или паровых средств, вредных для вашего здоровья?'
     }
   },
   {
     id: 'q5',
     text: {
-      uz: 'Sizni guruh o\'yinlaridan yoki tadbirlardan ataylab chetlatishadimi?',
-      ru: 'Вас специально исключают из групповых игр или мероприятий?'
+      uz: 'Kayfiyatni sun\'iy tarzda o\'zgartiruvchi "maxsus" ichimliklarni tatib ko\'rish takliflari bo\'ladimi?',
+      ru: 'Бывают ли предложения попробовать "особые" напитки, искусственно меняющие настроение?'
     }
   },
   {
     id: 'q6',
     text: {
-      uz: 'Maktabga borishdan qo\'rqasizmi?',
-      ru: 'Боитесь ли вы идти в школу?'
+      uz: 'Kattalar yoki tartib-qoidalarga qarshi chiqish orqali o\'zingizni ko\'rsatishni yoqtirasizmi?',
+      ru: 'Нравится ли вам проявлять себя, идя против взрослых или установленных правил?'
     }
   },
   {
     id: 'q7',
     text: {
-      uz: 'Boshqalarning kamsitilishini ko\'rganmisiz?',
-      ru: 'Видели ли вы, как унижают других?'
+      uz: 'Sizni jamoat tadbirlaridan yoki guruh suhbatlaridan ataylab chetlatishadimi?',
+      ru: 'Вас специально исключают из общественных мероприятий или групповых бесед?'
+    }
+  },
+  {
+    id: 'q8',
+    text: {
+      uz: 'Darslardan sababsiz qolish yoki intizomni buzish holatlari sizda kuzatiladimi?',
+      ru: 'Наблюдаются ли у вас случаи прогулов уроков без причины или нарушения дисциплины?'
+    }
+  },
+  {
+    id: 'q9',
+    text: {
+      uz: 'Atrofingizdagilar sizni xavfli yoki tavakkalchilikka asoslangan ishlarga undashadimi?',
+      ru: 'Побуждают ли окружающие вас к опасным или рискованным поступкам?'
+    }
+  },
+  {
+    id: 'q10',
+    text: {
+      uz: 'Internet tarmoqlarida sizga nisbatan bosim yoki haqoratlar bo\'ladimi?',
+      ru: 'Бывают ли в отношении вас давление или оскорбления в интернет-сетях?'
     }
   }
 ];
 
+export const RESPONSE_LABELS = {
+  uz: ['Hech qachon', 'Kamdan-kam', 'Ba\'zida', 'Tez-tez', 'Har doim'],
+  ru: ['Никогда', 'Редко', 'Иногда', 'Часто', 'Всегда']
+};
+
 export const TRANSLATIONS = {
   uz: {
     title: 'GULISTON DAVLAT PEDAGOGIKA INSTITUTI',
-    subtitle: 'Bullingni aniqlash va oldini olish tizimi',
+    subtitle: 'Monitoring va tahlil tizimi',
     startSurvey: 'So\'rovnomani boshlash',
     adminLogin: 'Admin tizimiga kirish',
     registerTitle: 'Ro\'yxatdan o\'tish',
@@ -80,18 +106,22 @@ export const TRANSLATIONS = {
     adminPanel: 'Admin Paneli',
     statistics: 'Statistika',
     aiAnalysis: 'AI Tahlili',
+    participants: 'Ishtirokchilar',
     noData: 'Ma\'lumotlar mavjud emas',
     totalSurveys: 'Jami so\'rovnomalar',
-    bullyingRisk: 'Bulling xavfi darajasi',
+    bullyingRisk: 'Xavf darajasi',
     analyzeWithAI: 'AI bilan tahlil qilish',
     loading: 'Yuklanmoqda...',
-    deleteData: 'Barcha ma\'lumotlarni o\'chirish',
-    confirmDelete: 'Haqiqatdan ham o\'chirmoqchimisiz?',
-    thankYou: 'Rahmat! Ma\'lumotlaringiz muvaffaqiyatli saqlandi.'
+    deleteData: 'Ma\'lumotlarni o\'chirish',
+    confirmDelete: 'Haqiqatdan ham barcha ma\'lumotlarni o\'chirmoqchimisiz?',
+    thankYou: 'Rahmat! Ma\'lumotlaringiz muvaffaqiyatli saqlandi.',
+    viewDetails: 'Ko\'rish',
+    detailsTitle: 'Ishtirokchi javoblari',
+    close: 'Yopish'
   },
   ru: {
     title: 'ГУЛИСТАНСКИЙ ГОСУДАРСТВЕННЫЙ ПЕДАГОГИЧЕСКИЙ ИНСТИТУТ',
-    subtitle: 'Система выявления и предотвращения буллинга',
+    subtitle: 'Система мониторинга и анализа',
     startSurvey: 'Начать опрос',
     adminLogin: 'Вход для админа',
     registerTitle: 'Регистрация',
@@ -109,13 +139,17 @@ export const TRANSLATIONS = {
     adminPanel: 'Панель администратора',
     statistics: 'Статистика',
     aiAnalysis: 'AI Анализ',
+    participants: 'Участники',
     noData: 'Нет данных',
     totalSurveys: 'Всего опросов',
-    bullyingRisk: 'Уровень риска буллинга',
+    bullyingRisk: 'Уровень риска',
     analyzeWithAI: 'Анализировать через AI',
     loading: 'Загрузка...',
-    deleteData: 'Удалить все данные',
-    confirmDelete: 'Вы действительно хотите удалить всё?',
-    thankYou: 'Спасибо! Ваши данные успешно сохранены.'
+    deleteData: 'Удалить данные',
+    confirmDelete: 'Вы действительно хотите удалить все данные?',
+    thankYou: 'Спасибо! Ваши данные успешно сохранены.',
+    viewDetails: 'Смотреть',
+    detailsTitle: 'Ответы участника',
+    close: 'Закрыть'
   }
 };
