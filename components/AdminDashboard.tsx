@@ -23,15 +23,49 @@ export const AdminDashboard: React.FC<Props> = ({ data, lang, onClear, onRefresh
   
   const t = TRANSLATIONS[lang];
 
-  // Helper for colors based on risk score
+  const formatDate = (timestamp: number) => {
+    return new Date(timestamp).toLocaleString(lang === 'uz' ? 'uz-UZ' : 'ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const copyToClipboard = async (text: string) => {
+    const cleanText = text.replace(/[#*]/g, '');
+    try {
+      await navigator.clipboard.writeText(cleanText);
+      alert(t.copied);
+    } catch (err) {
+      alert("Xatolik yuz berdi");
+    }
+  };
+
+  const shareContent = async (text: string, title: string) => {
+    const cleanText = text.replace(/[#*]/g, '');
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: title,
+          text: cleanText,
+        });
+      } catch (err) {
+        console.log("Sharing failed");
+      }
+    } else {
+      copyToClipboard(text);
+    }
+  };
+
   const getRiskColor = (score: number) => {
-    if (score >= 2.5) return '#ef4444'; // Red
-    if (score >= 1.5) return '#f59e0b'; // Amber
-    return '#10b981'; // Emerald
+    if (score >= 2.5) return '#ef4444'; 
+    if (score >= 1.5) return '#f59e0b'; 
+    return '#10b981'; 
   };
 
   const exportToWord = (content: string, filename: string, titleSuffix: string = "") => {
-    // Convert markdown/text to simple HTML for Word
     const formattedContent = content
       .replace(/^# (.*$)/gim, '<h1 style="color: #000; font-family: Arial; text-align:center;">$1</h1>')
       .replace(/^## (.*$)/gim, '<h2 style="color: #000; margin-top: 20px; border-bottom: 2px solid #000;">$1</h2>')
@@ -62,7 +96,7 @@ export const AdminDashboard: React.FC<Props> = ({ data, lang, onClear, onRefresh
         <h2 style="text-align: center; color: #000;">${titleSuffix || "Monitoring Natijalari"}</h2>
         <div class="content">${formattedContent}</div>
         <div class="footer">
-          <p>Yaratilgan vaqt: ${new Date().toLocaleString('uz-UZ')}</p>
+          <p>Hisobot yaratilgan vaqt: ${new Date().toLocaleString('uz-UZ')}</p>
           <p>© Guliston Davlat Pedagogika Instituti - Anarkulova Zarina Axmad qizi</p>
         </div>
       </body>
@@ -101,49 +135,34 @@ export const AdminDashboard: React.FC<Props> = ({ data, lang, onClear, onRefresh
 
   const handleFullStatsExport = () => {
     let report = `## Umumiy Statistika\n`;
-    report += `- Jami ishtirokchilar: ${data.length}\n`;
+    report += `- Jami ishtirokchilar soni: ${data.length}\n`;
     report += `- Eng yuqori xavfli sinflar: ${statsByClass.slice(0, 3).map(c => `${c.name} (${c.averageRisk})`).join(', ')}\n\n`;
     
-    report += `### Sinflar bo'yicha tahlil\n`;
-    statsByClass.forEach(c => {
-      report += `- ${c.name} sinfi: O'rtacha xavf darajasi ${c.averageRisk}\n`;
+    report += `### Ishtirokchilar ro'yxati va to'ldirilgan vaqti\n`;
+    data.forEach(r => {
+      report += `- ${r.user.firstName} ${r.user.lastName} (${r.user.classNumber}-${r.user.classLetter}) - **Vaqt: ${formatDate(r.timestamp)}** - Risk: ${getAverageScore(r.answers).toFixed(2)}\n`;
     });
-
-    report += `\n### Yuqori xavf guruhidagi o'quvchilar\n`;
-    const highRisk = data.filter(r => getAverageScore(r.answers) >= 2.5);
-    if (highRisk.length > 0) {
-      highRisk.forEach(r => {
-        report += `- ${r.user.firstName} ${r.user.lastName} (${r.user.classNumber}-${r.user.classLetter}): ${getAverageScore(r.answers).toFixed(2)}\n`;
-      });
-    } else {
-      report += `- Yuqori xavfli o'quvchilar aniqlanmadi.\n`;
-    }
 
     exportToWord(report, "Umumiy_Statistika_Hisoboti", "Monitoring va Tahlil Hisoboti");
   };
 
   const shareDashboardStats = async () => {
     const highRiskCount = data.filter(r => getAverageScore(r.answers) >= 2.5).length;
-    const summary = `${t.title}\n${t.totalSurveys}: ${data.length}\nYuqori xavf: ${highRiskCount} nafar\nEng xavfli sinf: ${statsByClass[0]?.name || 'N/A'}`;
-    
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: 'Monitoring Statistikasi', text: summary });
-      } catch (e) { console.log('Share error'); }
-    } else {
-      await navigator.clipboard.writeText(summary);
-      alert(t.copied);
-    }
+    const summary = `${t.title}\n${t.totalSurveys}: ${data.length}\nYuqori xavf: ${highRiskCount} nafar\nOxirgi yangilanish: ${new Date().toLocaleTimeString('uz-UZ')}`;
+    shareContent(summary, "Monitoring Statistikasi");
   };
 
   const sortedParticipants = useMemo(() => {
-    return [...data].sort((a, b) => getAverageScore(b.answers) - getAverageScore(a.answers));
+    return [...data].sort((a, b) => b.timestamp - a.timestamp); 
   }, [data]);
 
-  const statsByAge = useMemo(() => {
-    const map: Record<number, number> = {};
-    data.forEach(r => { map[r.user.birthYear] = (map[r.user.birthYear] || 0) + 1; });
-    return Object.entries(map).map(([year, count]) => ({ year, talabalar: count })).sort((a, b) => Number(a.year) - Number(b.year));
+  const statsByDate = useMemo(() => {
+    const map: Record<string, number> = {};
+    data.forEach(r => {
+      const date = new Date(r.timestamp).toLocaleDateString('uz-UZ');
+      map[date] = (map[date] || 0) + 1;
+    });
+    return Object.entries(map).map(([date, count]) => ({ date, count })).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [data]);
 
   const handleAiAnalysis = async () => {
@@ -189,8 +208,8 @@ export const AdminDashboard: React.FC<Props> = ({ data, lang, onClear, onRefresh
         </div>
         <div className="flex flex-wrap gap-4">
           <button onClick={onRefresh} title="Yangilash" className="px-6 py-4 bg-blue-100 text-blue-700 rounded-2xl font-bold hover:bg-blue-200 transition">🔄</button>
-          <button onClick={handleFullStatsExport} title="Wordda yuklash" className="px-6 py-4 bg-indigo-100 text-indigo-700 rounded-2xl font-bold hover:bg-indigo-200 transition">📄</button>
-          <button onClick={shareDashboardStats} title="Ulashish" className="px-6 py-4 bg-emerald-100 text-emerald-700 rounded-2xl font-bold hover:bg-emerald-200 transition">📤</button>
+          <button onClick={handleFullStatsExport} title={t.exportData} className="px-6 py-4 bg-indigo-100 text-indigo-700 rounded-2xl font-bold hover:bg-indigo-200 transition">📄</button>
+          <button onClick={shareDashboardStats} title={t.share} className="px-6 py-4 bg-emerald-100 text-emerald-700 rounded-2xl font-bold hover:bg-emerald-200 transition">📤</button>
           <button onClick={onLogout} className="px-6 py-4 bg-white/50 border border-gray-300 rounded-2xl font-bold text-black hover:bg-white transition">{t.back}</button>
           <button onClick={onClear} className="px-8 py-4 bg-red-600 text-white rounded-2xl font-bold hover:bg-red-700 transition shadow-lg">{t.deleteData}</button>
         </div>
@@ -199,12 +218,12 @@ export const AdminDashboard: React.FC<Props> = ({ data, lang, onClear, onRefresh
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="glass-morphism p-8 rounded-[2.5rem] shadow-lg border border-white/50">
-          <h3 className="text-lg font-black mb-6 text-black border-l-4 border-red-600 pl-4 uppercase tracking-tighter">{t.bullyingRisk} (Sinflar - Risk Rangi)</h3>
+          <h3 className="text-lg font-black mb-6 text-black border-l-4 border-red-600 pl-4 uppercase tracking-tighter">{t.bullyingRisk} (Sinflar)</h3>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={statsByClass}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.1)" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#000', fontWeight: 'bold'}} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#000', fontWeight: 'bold', fontSize: 12}} />
                 <YAxis axisLine={false} tickLine={false} tick={{fill: '#000', fontWeight: 'bold'}} />
                 <Tooltip 
                   contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', color: '#000'}} 
@@ -220,16 +239,17 @@ export const AdminDashboard: React.FC<Props> = ({ data, lang, onClear, onRefresh
           </div>
         </div>
         <div className="glass-morphism p-8 rounded-[2.5rem] shadow-lg border border-white/50">
-          <h3 className="text-lg font-black mb-6 text-black border-l-4 border-emerald-600 pl-4 uppercase tracking-tighter">O'quvchilar yoshi (Faollik)</h3>
+          <h3 className="text-lg font-black mb-6 text-black border-l-4 border-emerald-600 pl-4 uppercase tracking-tighter">{t.activity}</h3>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={statsByAge}>
-                <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{fill: '#000', fontWeight: 'bold'}} />
+              <AreaChart data={statsByDate}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
+                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#000', fontWeight: 'bold', fontSize: 10}} />
                 <YAxis axisLine={false} tickLine={false} tick={{fill: '#000', fontWeight: 'bold'}} />
                 <Tooltip 
                    contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', color: '#000'}}
                 />
-                <Area type="monotone" dataKey="talabalar" stroke="#10b981" fill="#10b981" fillOpacity={0.4} strokeWidth={3} />
+                <Area type="monotone" dataKey="count" stroke="#10b981" fill="#10b981" fillOpacity={0.4} strokeWidth={3} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -248,6 +268,7 @@ export const AdminDashboard: React.FC<Props> = ({ data, lang, onClear, onRefresh
                 <th className="px-10 py-6">{t.firstName} {t.lastName}</th>
                 <th className="px-10 py-6">{t.schoolNumber}</th>
                 <th className="px-10 py-6">{t.classNumber}-{t.classLetter}</th>
+                <th className="px-10 py-6">{t.submissionDate}</th>
                 <th className="px-10 py-6 text-center">{t.riskLevel}</th>
                 <th className="px-10 py-6 text-right">Harakat</th>
               </tr>
@@ -258,6 +279,7 @@ export const AdminDashboard: React.FC<Props> = ({ data, lang, onClear, onRefresh
                   <td className="px-10 py-6 font-bold text-black">{r.user.firstName} {r.user.lastName}</td>
                   <td className="px-10 py-6 text-black font-medium">{r.user.schoolNumber}-maktab</td>
                   <td className="px-10 py-6 text-black font-medium">{r.user.classNumber}-{r.user.classLetter}</td>
+                  <td className="px-10 py-6 text-black font-black text-[11px] whitespace-nowrap">{formatDate(r.timestamp)}</td>
                   <td className="px-10 py-6 text-center">{getRiskBadge(getAverageScore(r.answers))}</td>
                   <td className="px-10 py-6 text-right">
                     <button onClick={() => setSelectedResponse(r)} className="px-6 py-2 bg-black text-white rounded-xl font-black text-xs hover:bg-gray-800 transition shadow-md">
@@ -287,15 +309,16 @@ export const AdminDashboard: React.FC<Props> = ({ data, lang, onClear, onRefresh
               {t.analyzeWithAI}
             </button>
             {aiAnalysis && (
-              <>
-                <button onClick={() => exportToWord(aiAnalysis, "AI_Tahlili", "AI Monitoring Xulosasi")} className="px-6 py-4 bg-blue-100 text-blue-800 rounded-2xl font-bold hover:bg-blue-200 border border-blue-200">📄</button>
-                <button onClick={() => shareContent(aiAnalysis, "Monitoring AI Xulosasi")} className="px-6 py-4 bg-emerald-100 text-emerald-800 rounded-2xl font-bold hover:bg-emerald-200 border border-emerald-200">📤</button>
-              </>
+              <div className="flex bg-white/50 border border-indigo-100 rounded-2xl p-1 gap-1">
+                <button onClick={() => copyToClipboard(aiAnalysis)} title={t.copy} className="px-6 py-3 bg-white text-indigo-700 rounded-xl font-bold hover:bg-indigo-50 transition border border-indigo-50 shadow-sm flex items-center gap-2">📋 <span className="hidden sm:inline text-xs">{t.copy}</span></button>
+                <button onClick={() => exportToWord(aiAnalysis, "AI_Tahlili", "AI Monitoring Xulosasi")} title={t.exportData} className="px-6 py-3 bg-blue-100 text-blue-800 rounded-xl font-bold hover:bg-blue-200 transition border border-blue-200 flex items-center gap-2">📄 <span className="hidden sm:inline text-xs">Word</span></button>
+                <button onClick={() => shareContent(aiAnalysis, "Monitoring AI Xulosasi")} title={t.share} className="px-6 py-3 bg-emerald-100 text-emerald-800 rounded-xl font-bold hover:bg-emerald-200 transition border border-emerald-200 flex items-center gap-2">📤 <span className="hidden sm:inline text-xs">{t.share}</span></button>
+              </div>
             )}
           </div>
         </div>
         {aiAnalysis && (
-          <div className="prose max-w-none bg-white p-10 rounded-[2rem] border border-gray-200 whitespace-pre-wrap text-black font-bold fade-in shadow-inner overflow-y-auto max-h-[600px] custom-scrollbar">
+          <div className="prose max-w-none bg-white p-10 rounded-[2rem] border border-gray-200 whitespace-pre-wrap text-black font-bold fade-in shadow-inner overflow-y-auto max-h-[600px] custom-scrollbar selection:bg-indigo-100">
             {aiAnalysis}
           </div>
         )}
@@ -306,13 +329,16 @@ export const AdminDashboard: React.FC<Props> = ({ data, lang, onClear, onRefresh
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-md fade-in">
           <div className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden max-h-[95vh] flex flex-col border border-gray-100">
             <div className="p-10 border-b flex justify-between items-center bg-gray-50">
-              <h3 className="text-3xl font-black text-black">{selectedResponse.user.firstName} {selectedResponse.user.lastName}</h3>
+              <div className="flex flex-col">
+                <h3 className="text-3xl font-black text-black">{selectedResponse.user.firstName} {selectedResponse.user.lastName}</h3>
+                <span className="text-xs font-black text-blue-600 mt-1 uppercase tracking-widest">{t.submissionDate}: {formatDate(selectedResponse.timestamp)}</span>
+              </div>
               <button onClick={() => setSelectedResponse(null)} className="w-12 h-12 flex items-center justify-center bg-white border border-gray-200 hover:bg-red-50 hover:border-red-200 rounded-2xl transition font-black text-black">✕</button>
             </div>
             <div className="p-10 overflow-y-auto space-y-8 custom-scrollbar">
               <div className="grid grid-cols-2 gap-4 bg-gray-50 p-6 rounded-3xl border border-gray-100">
-                <div><p className="text-[10px] font-black text-gray-400 uppercase">Maktab</p><p className="font-black text-black">{selectedResponse.user.schoolNumber}</p></div>
-                <div><p className="text-[10px] font-black text-gray-400 uppercase">Sinf</p><p className="font-black text-black">{selectedResponse.user.classNumber}-{selectedResponse.user.classLetter}</p></div>
+                <div><p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Maktab</p><p className="font-black text-black">{selectedResponse.user.schoolNumber}</p></div>
+                <div><p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Sinf</p><p className="font-black text-black">{selectedResponse.user.classNumber}-{selectedResponse.user.classLetter}</p></div>
               </div>
               <div className="space-y-4">
                 <div className="flex gap-2">
@@ -320,13 +346,14 @@ export const AdminDashboard: React.FC<Props> = ({ data, lang, onClear, onRefresh
                     {loadingIndividualAi ? "Yuklanmoqda..." : "✨ Individual AI Tahlil"}
                   </button>
                   {individualAiResult && (
-                    <>
-                      <button onClick={() => exportToWord(individualAiResult, `${selectedResponse.user.firstName}_Tahlil`, `${selectedResponse.user.firstName} uchun Individual Xulosa`)} className="px-6 py-5 bg-blue-50 text-blue-800 rounded-2xl border border-blue-200">📄</button>
-                      <button onClick={() => shareContent(individualAiResult, "Individual AI Xulosa")} className="px-6 py-5 bg-emerald-50 text-emerald-800 rounded-2xl border border-emerald-200">📤</button>
-                    </>
+                    <div className="flex bg-white border border-indigo-100 rounded-2xl p-1 gap-1">
+                      <button onClick={() => copyToClipboard(individualAiResult)} className="px-4 py-2 bg-white text-indigo-700 rounded-xl font-bold border border-indigo-50 shadow-sm">📋</button>
+                      <button onClick={() => exportToWord(individualAiResult, `${selectedResponse.user.firstName}_Tahlil`, `${selectedResponse.user.firstName} uchun Individual Xulosa`)} className="px-4 py-2 bg-blue-50 text-blue-800 rounded-xl border border-blue-100">📄</button>
+                      <button onClick={() => shareContent(individualAiResult, "Individual AI Xulosa")} className="px-4 py-2 bg-emerald-50 text-emerald-800 rounded-xl border border-emerald-100">📤</button>
+                    </div>
                   )}
                 </div>
-                {individualAiResult && <div className="p-8 bg-indigo-50/50 rounded-[2rem] text-sm whitespace-pre-wrap leading-relaxed shadow-inner border border-indigo-100 text-black font-bold">{individualAiResult}</div>}
+                {individualAiResult && <div className="p-8 bg-indigo-50/50 rounded-[2rem] text-sm whitespace-pre-wrap leading-relaxed shadow-inner border border-indigo-100 text-black font-bold selection:bg-indigo-200">{individualAiResult}</div>}
               </div>
               <div className="space-y-6">
                 <h4 className="font-black text-black uppercase text-xs tracking-widest border-b pb-2">Javoblar tafsiloti</h4>
@@ -347,21 +374,4 @@ export const AdminDashboard: React.FC<Props> = ({ data, lang, onClear, onRefresh
       )}
     </div>
   );
-};
-
-const shareContent = async (text: string, title: string) => {
-  const cleanText = text.replace(/[#*]/g, '');
-  if (navigator.share) {
-    try {
-      await navigator.share({
-        title: title,
-        text: cleanText,
-      });
-    } catch (err) {
-      console.log("Sharing failed");
-    }
-  } else {
-    await navigator.clipboard.writeText(cleanText);
-    alert("Nusxalandi!");
-  }
 };

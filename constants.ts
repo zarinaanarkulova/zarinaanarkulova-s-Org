@@ -127,6 +127,7 @@ export const TRANSLATIONS = {
     submissionDate: 'Yuborilgan vaqt',
     exportData: 'Wordda yuklash (DOC)',
     share: 'Ulashish',
+    copy: 'Nusxa ko\'chirish',
     copied: 'Nusxalandi!'
   },
   ru: {
@@ -170,6 +171,7 @@ export const TRANSLATIONS = {
     submissionDate: 'Время отправки',
     exportData: 'Скачать в Word (DOC)',
     share: 'Поделиться',
+    copy: 'Копировать',
     copied: 'Скопировано!'
   }
 };
