@@ -3,72 +3,64 @@ import { GoogleGenAI } from "@google/genai";
 import { SurveyResponse } from "../types";
 import { SURVEY_QUESTIONS, RESPONSE_LABELS } from "../constants";
 
-// Har safar yangi instance yaratish eng oxirgi API kalitidan foydalanishni ta'minlaydi
-const getAiInstance = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
-
 export const analyzeBullyingData = async (responses: SurveyResponse[], language: 'uz' | 'ru') => {
   if (responses.length === 0) return language === 'uz' ? "Tahlil qilish uchun ma'lumotlar mavjud emas." : "Нет данных для анализа.";
 
-  const ai = getAiInstance();
+  // Create instance right before call as per guidelines
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   const summary = responses.map(r => ({
-    school: r.user.schoolNumber,
+    student: `${r.user.firstName} ${r.user.lastName}`,
     class: `${r.user.classNumber}-${r.user.classLetter}`,
-    avgScore: (Object.values(r.answers) as number[]).reduce((a: number, b: number) => a + b, 0) / (Object.values(r.answers).length || 1)
+    avgRiskScore: (Object.values(r.answers) as number[]).reduce((a: number, b: number) => a + b, 0) / (Object.values(r.answers).length || 1)
   }));
 
   try {
-    // Complex reasoning tasks should use gemini-3-pro-preview
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
-      contents: `Quyidagi maktab bulling monitoringi ma'lumotlarini tahlil qiling: ${JSON.stringify(summary)}`,
+      contents: `Quyidagi maktab bulling monitoringi ma'lumotlarini tahlil qiling va hisobot tayyorlang: ${JSON.stringify(summary)}`,
       config: {
-        systemInstruction: `Siz professional ta'lim psixologi va xulq-atvor tahlilchisiz. 
+        systemInstruction: `Siz Guliston Davlat Pedagogika Instituti qoshidagi professional ta'lim psixologi va xulq-atvor tahlilchisiz. 
         Vazifangiz: 
-        1. Taqdim etilgan ma'lumotlar asosida umumiy vaziyatni baholash.
-        2. Eng yuqori xavf guruhidagi sinf va maktablarni aniqlash.
-        3. Bullingni kamaytirish bo'yicha amaliy (pedagogik va psixologik) tavsiyalar berish.
-        4. O'qituvchilar uchun "yo'l xaritasi" taklif qilish.
+        1. Taqdim etilgan ${responses.length} ta so'rovnoma natijalari asosida umumiy vaziyatni baholash.
+        2. Eng yuqori xavf guruhidagi sinflarni aniqlash.
+        3. Bullingni kamaytirish bo'yicha amaliy tavsiyalar berish.
         Javob tili: ${language === 'uz' ? 'O\'zbek tili' : 'Rus tili'}.
-        Javobni chiroyli Markdown formatida, sarlavhalar va punktlar bilan bering.`,
-        thinkingConfig: { thinkingBudget: 4000 }
+        Javobni professional Markdown formatida bering.`,
+        thinkingConfig: { thinkingBudget: 2000 }
       },
     });
-    return response.text || (language === 'uz' ? "Tahlil natijasi bo'sh qaytdi." : "Результат анализа пуст.");
+    return response.text || "AI javob qaytarmadi.";
   } catch (error: any) {
     console.error("AI Analysis Error:", error);
-    throw error; // Xatolikni UI'da tutish uchun qaytaramiz
+    throw new Error(error.message || "AI tahlili jarayonida texnik xatolik yuz berdi.");
   }
 };
 
 export const analyzeIndividualResponse = async (response: SurveyResponse, language: 'uz' | 'ru') => {
-  const ai = getAiInstance();
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   const QandA = SURVEY_QUESTIONS.map(q => ({
     question: q.text[language],
-    answer: RESPONSE_LABELS[language][response.answers[q.id]] || 'Javob berilmagan'
+    answer: RESPONSE_LABELS[language][response.answers[q.id]] || 'Noma\'lum'
   }));
 
   try {
-    // Complex reasoning tasks should use gemini-3-pro-preview
     const res = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
-      contents: `O'quvchi javoblari: ${JSON.stringify(QandA)}`,
+      contents: `O'quvchi ${response.user.firstName} ${response.user.lastName} ning javoblari: ${JSON.stringify(QandA)}`,
       config: {
         systemInstruction: `Siz bolalar psixologi va o'smirlar bo'yicha mutaxassissiz. 
-        Sizga ${response.user.firstName} ${response.user.lastName} ismli (${response.user.classNumber}-sinf) o'quvchining so'rovnomadagi javoblari beriladi. 
-        Vazifangiz:
-        1. Ushbu individual javoblar asosida o'quvchining bullingga duchor bo'lish (yoki agressiya) xavfini 10 ballik tizimda baholang.
-        2. O'quvchi bilan ishlash bo'yicha maxfiy tavsiyalar tayyorlang.
-        3. Ota-onalar va sinf rahbari uchun aniq harakatlar algoritmini bering.
+        Ushbu individual javoblar asosida o'quvchining ruhiy holatini baholang va xavf darajasini tushuntiring.
+        Sinf rahbari va ota-onalar uchun tavsiyalar bering.
         Javob tili: ${language === 'uz' ? 'O\'zbek tili' : 'Rus tili'}.
         Markdown formatida javob bering.`,
-        thinkingConfig: { thinkingBudget: 2000 }
+        thinkingConfig: { thinkingBudget: 1500 }
       }
     });
     return res.text || "Xulosa generatsiya qilinmadi.";
   } catch (error: any) {
     console.error("Individual AI Analysis Error:", error);
-    throw error;
+    throw new Error(error.message || "Individual tahlilda xatolik.");
   }
 };
