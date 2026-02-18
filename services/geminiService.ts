@@ -3,6 +3,7 @@ import { GoogleGenAI } from "@google/genai";
 import { SurveyResponse } from "../types";
 import { SURVEY_QUESTIONS, RESPONSE_LABELS } from "../constants";
 
+// Har safar yangi instance yaratish eng oxirgi API kalitidan foydalanishni ta'minlaydi
 const getAiInstance = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const analyzeBullyingData = async (responses: SurveyResponse[], language: 'uz' | 'ru') => {
@@ -17,6 +18,7 @@ export const analyzeBullyingData = async (responses: SurveyResponse[], language:
   }));
 
   try {
+    // Complex reasoning tasks should use gemini-3-pro-preview
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: `Quyidagi maktab bulling monitoringi ma'lumotlarini tahlil qiling: ${JSON.stringify(summary)}`,
@@ -29,15 +31,13 @@ export const analyzeBullyingData = async (responses: SurveyResponse[], language:
         4. O'qituvchilar uchun "yo'l xaritasi" taklif qilish.
         Javob tili: ${language === 'uz' ? 'O\'zbek tili' : 'Rus tili'}.
         Javobni chiroyli Markdown formatida, sarlavhalar va punktlar bilan bering.`,
-        thinkingConfig: { thinkingBudget: 2000 }
+        thinkingConfig: { thinkingBudget: 4000 }
       },
     });
     return response.text || (language === 'uz' ? "Tahlil natijasi bo'sh qaytdi." : "Результат анализа пуст.");
-  } catch (error) {
+  } catch (error: any) {
     console.error("AI Analysis Error:", error);
-    return language === 'uz' 
-      ? "AI tahlili vaqtida xatolik yuz berdi. Iltimos, API kalitini tekshiring yoki birozdan so'ng urinib ko'ring." 
-      : "Произошла ошибка при AI анализе. Проверьте API ключ или попробуйте позже.";
+    throw error; // Xatolikni UI'da tutish uchun qaytaramiz
   }
 };
 
@@ -50,6 +50,7 @@ export const analyzeIndividualResponse = async (response: SurveyResponse, langua
   }));
 
   try {
+    // Complex reasoning tasks should use gemini-3-pro-preview
     const res = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: `O'quvchi javoblari: ${JSON.stringify(QandA)}`,
@@ -62,12 +63,12 @@ export const analyzeIndividualResponse = async (response: SurveyResponse, langua
         3. Ota-onalar va sinf rahbari uchun aniq harakatlar algoritmini bering.
         Javob tili: ${language === 'uz' ? 'O\'zbek tili' : 'Rus tili'}.
         Markdown formatida javob bering.`,
-        thinkingConfig: { thinkingBudget: 1500 }
+        thinkingConfig: { thinkingBudget: 2000 }
       }
     });
     return res.text || "Xulosa generatsiya qilinmadi.";
-  } catch (error) {
+  } catch (error: any) {
     console.error("Individual AI Analysis Error:", error);
-    return language === 'uz' ? "Individual tahlil amalga oshmadi." : "Индивидуальный анализ не удался.";
+    throw error;
   }
 };

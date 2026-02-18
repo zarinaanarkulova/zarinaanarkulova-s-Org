@@ -106,7 +106,7 @@ export const TRANSLATIONS = {
     adminPanel: 'Admin Paneli',
     statistics: 'Statistika',
     aiAnalysis: 'AI Tahlili',
-    participants: 'Ishtirokchilar (Xavf bo\'yicha tartiblangan)',
+    participants: 'Ishtirokchilar',
     noData: 'Ma\'lumotlar mavjud emas',
     totalSurveys: 'Jami so\'rovnomalar',
     bullyingRisk: 'Xavf darajasi',
@@ -128,7 +128,11 @@ export const TRANSLATIONS = {
     exportData: 'Wordda yuklash (DOC)',
     share: 'Ulashish',
     copy: 'Nusxa ko\'chirish',
-    copied: 'Nusxalandi!'
+    copied: 'Nusxalandi!',
+    listView: 'Ro\'yxat ko\'rinishi',
+    groupView: 'Guruhlangan ko\'rinish',
+    schools: 'Maktablar',
+    classes: 'SinflarKesimi'
   },
   ru: {
     title: 'ГУЛИСТАНСКИЙ ГОСУДАРСТВЕННЫЙ ПЕДАГОГИЧЕСКИЙ ИНСТИТУТ',
@@ -150,7 +154,7 @@ export const TRANSLATIONS = {
     adminPanel: 'Панель администратора',
     statistics: 'Статистика',
     aiAnalysis: 'AI Анализ',
-    participants: 'Участники (По уровню риска)',
+    participants: 'Участники',
     noData: 'Нет данных',
     totalSurveys: 'Всего опросов',
     bullyingRisk: 'Уровень риска',
@@ -172,6 +176,10 @@ export const TRANSLATIONS = {
     exportData: 'Скачать в Word (DOC)',
     share: 'Поделиться',
     copy: 'Копировать',
-    copied: 'Скопировано!'
+    copied: 'Скопировано!',
+    listView: 'Вид списка',
+    groupView: 'Группировка',
+    schools: 'Школы',
+    classes: 'Классы'
   }
 };
