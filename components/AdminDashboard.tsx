@@ -167,6 +167,7 @@ export const AdminDashboard: React.FC<Props> = ({ data, lang, onClear, onRefresh
 
   const handleAiAnalysis = async () => {
     setLoadingAi(true);
+    setAiAnalysis(null);
     try {
       const result = await analyzeBullyingData(data, lang);
       setAiAnalysis(result);
@@ -180,6 +181,7 @@ export const AdminDashboard: React.FC<Props> = ({ data, lang, onClear, onRefresh
   const handleIndividualAi = async () => {
     if (!selectedResponse) return;
     setLoadingIndividualAi(true);
+    setIndividualAiResult(null);
     try {
       const result = await analyzeIndividualResponse(selectedResponse, lang);
       setIndividualAiResult(result);
@@ -299,14 +301,14 @@ export const AdminDashboard: React.FC<Props> = ({ data, lang, onClear, onRefresh
           <h3 className="text-3xl font-black text-black flex items-center gap-4">
             <span className="p-3 bg-indigo-100 rounded-2xl text-2xl">🤖</span> {t.aiAnalysis}
           </h3>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <button
               onClick={handleAiAnalysis}
               disabled={loadingAi}
-              className="px-10 py-4 bg-indigo-700 text-white rounded-2xl font-black hover:bg-indigo-800 transition flex items-center gap-3 shadow-lg"
+              className="px-10 py-4 bg-indigo-700 text-white rounded-2xl font-black hover:bg-indigo-800 transition flex items-center gap-3 shadow-lg disabled:bg-indigo-300"
             >
               {loadingAi ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : "✨"}
-              {t.analyzeWithAI}
+              {loadingAi ? "Tahlil qilinmoqda..." : t.analyzeWithAI}
             </button>
             {aiAnalysis && (
               <div className="flex bg-white/50 border border-indigo-100 rounded-2xl p-1 gap-1">
@@ -317,8 +319,16 @@ export const AdminDashboard: React.FC<Props> = ({ data, lang, onClear, onRefresh
             )}
           </div>
         </div>
+        
+        {loadingAi && (
+          <div className="flex flex-col items-center justify-center p-20 space-y-4 bg-white/40 rounded-[2rem] border-2 border-dashed border-indigo-200">
+            <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+            <p className="font-black text-indigo-800 animate-pulse uppercase tracking-widest text-sm">AI chuqur tahlil o'tkazmoqda...</p>
+          </div>
+        )}
+
         {aiAnalysis && (
-          <div className="prose max-w-none bg-white p-10 rounded-[2rem] border border-gray-200 whitespace-pre-wrap text-black font-bold fade-in shadow-inner overflow-y-auto max-h-[600px] custom-scrollbar selection:bg-indigo-100">
+          <div className="prose max-w-none bg-white p-10 rounded-[2rem] border border-gray-200 whitespace-pre-wrap text-black font-bold fade-in shadow-inner overflow-y-auto max-h-[600px] custom-scrollbar selection:bg-indigo-100 leading-relaxed">
             {aiAnalysis}
           </div>
         )}
@@ -341,15 +351,20 @@ export const AdminDashboard: React.FC<Props> = ({ data, lang, onClear, onRefresh
                 <div><p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Sinf</p><p className="font-black text-black">{selectedResponse.user.classNumber}-{selectedResponse.user.classLetter}</p></div>
               </div>
               <div className="space-y-4">
-                <div className="flex gap-2">
-                  <button onClick={handleIndividualAi} disabled={loadingIndividualAi} className="flex-grow py-5 bg-indigo-700 text-white rounded-2xl font-black shadow-lg hover:bg-indigo-800 transition">
-                    {loadingIndividualAi ? "Yuklanmoqda..." : "✨ Individual AI Tahlil"}
+                <div className="flex flex-col gap-3">
+                  <button onClick={handleIndividualAi} disabled={loadingIndividualAi} className="w-full py-5 bg-indigo-700 text-white rounded-2xl font-black shadow-lg hover:bg-indigo-800 transition disabled:bg-indigo-300">
+                    {loadingIndividualAi ? (
+                      <div className="flex items-center justify-center gap-3">
+                         <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                         Psixologik tahlil tayyorlanmoqda...
+                      </div>
+                    ) : "✨ Individual AI Tahlil (Psixolog tavsiyasi)"}
                   </button>
                   {individualAiResult && (
                     <div className="flex bg-white border border-indigo-100 rounded-2xl p-1 gap-1">
-                      <button onClick={() => copyToClipboard(individualAiResult)} className="px-4 py-2 bg-white text-indigo-700 rounded-xl font-bold border border-indigo-50 shadow-sm">📋</button>
-                      <button onClick={() => exportToWord(individualAiResult, `${selectedResponse.user.firstName}_Tahlil`, `${selectedResponse.user.firstName} uchun Individual Xulosa`)} className="px-4 py-2 bg-blue-50 text-blue-800 rounded-xl border border-blue-100">📄</button>
-                      <button onClick={() => shareContent(individualAiResult, "Individual AI Xulosa")} className="px-4 py-2 bg-emerald-50 text-emerald-800 rounded-xl border border-emerald-100">📤</button>
+                      <button onClick={() => copyToClipboard(individualAiResult)} title={t.copy} className="flex-1 py-3 bg-white text-indigo-700 rounded-xl font-bold border border-indigo-50 shadow-sm flex items-center justify-center gap-2">📋 Nusxa</button>
+                      <button onClick={() => exportToWord(individualAiResult, `${selectedResponse.user.firstName}_Tahlil`, `${selectedResponse.user.firstName} uchun Individual Xulosa`)} className="flex-1 py-3 bg-blue-50 text-blue-800 rounded-xl border border-blue-100 flex items-center justify-center gap-2">📄 Word</button>
+                      <button onClick={() => shareContent(individualAiResult, "Individual AI Xulosa")} className="flex-1 py-3 bg-emerald-50 text-emerald-800 rounded-xl border border-emerald-100 flex items-center justify-center gap-2">📤 Ulashish</button>
                     </div>
                   )}
                 </div>
