@@ -6,8 +6,6 @@ export default defineConfig({
   define: {
     // Muhit o'zgaruvchilarini browser uchun process.env ob'ektiga xaritlaydi
     'process.env.API_KEY': JSON.stringify(process.env.VITE_GEMINI_API_KEY || process.env.API_KEY),
-    'process.env.VITE_SUPABASE_URL': JSON.stringify(process.env.VITE_SUPABASE_URL),
-    'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(process.env.VITE_SUPABASE_ANON_KEY)
   },
   build: {
     outDir: 'dist',

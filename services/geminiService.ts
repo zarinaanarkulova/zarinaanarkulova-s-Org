@@ -6,9 +6,9 @@ import { SURVEY_QUESTIONS, RESPONSE_LABELS } from "../constants";
 export const analyzeBullyingData = async (responses: SurveyResponse[], language: 'uz' | 'ru') => {
   if (responses.length === 0) return language === 'uz' ? "Tahlil qilish uchun ma'lumotlar mavjud emas." : "Нет данных для анализа.";
 
-  const apiKey = process.env.API_KEY;
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    throw new Error(language === 'uz' ? "Gemini API kaliti topilmadi. Iltimos, sozlamalarni tekshiring." : "API ключ Gemini не найден.");
+    throw new Error(language === 'uz' ? "Gemini API kaliti topilmadi. Iltimos, Netlify sozlamalarida VITE_GEMINI_API_KEY o'rnatilganini tekshiring." : "API ключ Gemini не найден. Проверьте настройки VITE_GEMINI_API_KEY.");
   }
 
   const ai = new GoogleGenAI({ apiKey });
@@ -42,7 +42,7 @@ export const analyzeBullyingData = async (responses: SurveyResponse[], language:
 };
 
 export const analyzeIndividualResponse = async (response: SurveyResponse, language: 'uz' | 'ru') => {
-  const apiKey = process.env.API_KEY;
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error(language === 'uz' ? "Gemini API kaliti topilmadi." : "API ключ Gemini не найден.");
   }
