@@ -1,13 +1,17 @@
 
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 import { SurveyResponse } from "../types";
 import { SURVEY_QUESTIONS, RESPONSE_LABELS } from "../constants";
 
 export const analyzeBullyingData = async (responses: SurveyResponse[], language: 'uz' | 'ru') => {
   if (responses.length === 0) return language === 'uz' ? "Tahlil qilish uchun ma'lumotlar mavjud emas." : "Нет данных для анализа.";
 
-  // Create instance right before call as per guidelines
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) {
+    throw new Error(language === 'uz' ? "Gemini API kaliti topilmadi. Iltimos, sozlamalarni tekshiring." : "API ключ Gemini не найден.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
 
   const summary = responses.map(r => ({
     student: `${r.user.firstName} ${r.user.lastName}`,
@@ -17,7 +21,7 @@ export const analyzeBullyingData = async (responses: SurveyResponse[], language:
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-3-flash-preview',
       contents: `Quyidagi maktab bulling monitoringi ma'lumotlarini tahlil qiling va hisobot tayyorlang: ${JSON.stringify(summary)}`,
       config: {
         systemInstruction: `Siz Guliston Davlat Pedagogika Instituti qoshidagi professional ta'lim psixologi va xulq-atvor tahlilchisiz. 
@@ -27,7 +31,7 @@ export const analyzeBullyingData = async (responses: SurveyResponse[], language:
         3. Bullingni kamaytirish bo'yicha amaliy tavsiyalar berish.
         Javob tili: ${language === 'uz' ? 'O\'zbek tili' : 'Rus tili'}.
         Javobni professional Markdown formatida bering.`,
-        thinkingConfig: { thinkingBudget: 2000 }
+        thinkingConfig: { thinkingLevel: ThinkingLevel.LOW }
       },
     });
     return response.text || "AI javob qaytarmadi.";
@@ -38,7 +42,12 @@ export const analyzeBullyingData = async (responses: SurveyResponse[], language:
 };
 
 export const analyzeIndividualResponse = async (response: SurveyResponse, language: 'uz' | 'ru') => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) {
+    throw new Error(language === 'uz' ? "Gemini API kaliti topilmadi." : "API ключ Gemini не найден.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
   
   const QandA = SURVEY_QUESTIONS.map(q => ({
     question: q.text[language],
@@ -47,7 +56,7 @@ export const analyzeIndividualResponse = async (response: SurveyResponse, langua
 
   try {
     const res = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-3-flash-preview',
       contents: `O'quvchi ${response.user.firstName} ${response.user.lastName} ning javoblari: ${JSON.stringify(QandA)}`,
       config: {
         systemInstruction: `Siz bolalar psixologi va o'smirlar bo'yicha mutaxassissiz. 
@@ -55,7 +64,7 @@ export const analyzeIndividualResponse = async (response: SurveyResponse, langua
         Sinf rahbari va ota-onalar uchun tavsiyalar bering.
         Javob tili: ${language === 'uz' ? 'O\'zbek tili' : 'Rus tili'}.
         Markdown formatida javob bering.`,
-        thinkingConfig: { thinkingBudget: 1500 }
+        thinkingConfig: { thinkingLevel: ThinkingLevel.LOW }
       }
     });
     return res.text || "Xulosa generatsiya qilinmadi.";

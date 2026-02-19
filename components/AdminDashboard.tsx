@@ -64,8 +64,8 @@ export const AdminDashboard: React.FC<Props> = ({ data, lang, onClear, onRefresh
       .replace(/^### (.*$)/gim, '<h3 style="color: #1e3a8a; margin-top: 15px;">$1</h3>')
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/\n/g, '<br/>')
-      .replace(/- (.*)/g, '<li style="margin-left: 20px;">$1</li>');
+      .replace(/^- (.*)/gm, '<li style="margin-left: 20px; list-style-type: disc;">$1</li>')
+      .replace(/\n/g, '<br/>');
 
     const htmlContent = `
       <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
@@ -140,6 +140,83 @@ export const AdminDashboard: React.FC<Props> = ({ data, lang, onClear, onRefresh
     return schools;
   }, [data]);
 
+  const generateStatsReport = () => {
+    const isUz = lang === 'uz';
+    let report = `# ${t.statistics}\n\n`;
+    report += `**${t.totalSurveys}**: ${data.length}\n`;
+    report += `**Hisobot sanasi**: ${new Date().toLocaleString()}\n\n`;
+    
+    report += `## 1. Sinflar bo'yicha tahlil\n`;
+    statsByClass.forEach(stat => {
+      const riskText = stat.averageRisk >= 2.5 ? t.highRisk : stat.averageRisk >= 1.5 ? t.mediumRisk : t.lowRisk;
+      report += `- **${stat.name} sinf**: O'rtacha xavf - ${stat.averageRisk} (${riskText})\n`;
+    });
+    
+    report += `\n## 2. Maktablar bo'yicha qamrov\n`;
+    Object.entries(groupedData).forEach(([school, classes]) => {
+      const classNames = Object.keys(classes).join(', ');
+      const studentCount = Object.values(classes).reduce((acc, curr) => acc + curr.length, 0);
+      report += `- **${school}-maktab**: ${studentCount} o'quvchi ishtirok etdi (${classNames} sinflar)\n`;
+    });
+
+    const riskCounts = { high: 0, medium: 0, low: 0 };
+    data.forEach(r => {
+      const score = getAverageScore(r.answers);
+      if (score >= 2.5) riskCounts.high++;
+      else if (score >= 1.5) riskCounts.medium++;
+      else riskCounts.low++;
+    });
+
+    report += `\n## 3. Umumiy xavf ko'rsatkichlari\n`;
+    report += `- **${t.highRisk} xavf**: ${riskCounts.high} ta o'quvchi (${((riskCounts.high / (data.length || 1)) * 100).toFixed(1)}%)\n`;
+    report += `- **${t.mediumRisk} xavf**: ${riskCounts.medium} ta o'quvchi (${((riskCounts.medium / (data.length || 1)) * 100).toFixed(1)}%)\n`;
+    report += `- **${t.lowRisk} xavf**: ${riskCounts.low} ta o'quvchi (${((riskCounts.low / (data.length || 1)) * 100).toFixed(1)}%)\n`;
+
+    report += `\n\n---\n*Ushbu hisobot Guliston Davlat Pedagogika Instituti Monitoring tizimi orqali avtomatik shakllantirildi.*`;
+    return report;
+  };
+
+  const generateReportForData = (reportData: SurveyResponse[], title: string) => {
+    let report = `# ${title}\n\n`;
+    report += `**Ishtirokchilar soni**: ${reportData.length}\n`;
+    report += `**Hisobot sanasi**: ${new Date().toLocaleString()}\n\n`;
+
+    const classMap: Record<string, { name: string; score: number; count: number }> = {};
+    reportData.forEach(r => {
+      const key = `${r.user.classNumber}-${r.user.classLetter}`;
+      if (!classMap[key]) classMap[key] = { name: key, score: 0, count: 0 };
+      classMap[key].score += getAverageScore(r.answers);
+      classMap[key].count += 1;
+    });
+    
+    const localStats = Object.values(classMap).map(v => ({
+      name: v.name,
+      averageRisk: Number((v.score / v.count).toFixed(2))
+    })).sort((a, b) => b.averageRisk - a.averageRisk);
+
+    report += `## Sinflar bo'yicha xavf darajasi\n`;
+    localStats.forEach(stat => {
+      const riskText = stat.averageRisk >= 2.5 ? t.highRisk : stat.averageRisk >= 1.5 ? t.mediumRisk : t.lowRisk;
+      report += `- **${stat.name} sinf**: ${stat.averageRisk} (${riskText})\n`;
+    });
+
+    const riskCounts = { high: 0, medium: 0, low: 0 };
+    reportData.forEach(r => {
+      const score = getAverageScore(r.answers);
+      if (score >= 2.5) riskCounts.high++;
+      else if (score >= 1.5) riskCounts.medium++;
+      else riskCounts.low++;
+    });
+
+    report += `\n## Umumiy xavf ko'rsatkichlari\n`;
+    report += `- **${t.highRisk}**: ${riskCounts.high} ta (${((riskCounts.high / (reportData.length || 1)) * 100).toFixed(1)}%)\n`;
+    report += `- **${t.mediumRisk}**: ${riskCounts.medium} ta (${((riskCounts.medium / (reportData.length || 1)) * 100).toFixed(1)}%)\n`;
+    report += `- **${t.lowRisk}**: ${riskCounts.low} ta (${((riskCounts.low / (reportData.length || 1)) * 100).toFixed(1)}%)\n`;
+
+    report += `\n\n---\n*Ushbu hisobot Guliston Davlat Pedagogika Instituti Monitoring tizimi orqali avtomatik shakllantirildi.*`;
+    return report;
+  };
+
   const handleAiAnalysis = async () => {
     setLoadingAi(true);
     setAiAnalysis(null);
@@ -185,7 +262,7 @@ export const AdminDashboard: React.FC<Props> = ({ data, lang, onClear, onRefresh
         </div>
         <div className="flex flex-wrap gap-4">
           <button 
-            onClick={() => exportToWord(`## Monitoring Statistikasi\nJami so'rovnomalar: ${data.length}\n\nSinflar bo'yicha xavf tahlili tayyorlandi.`, "Monitoring_Umumiy", "Statistik Hisobot")}
+            onClick={() => exportToWord(generateStatsReport(), "Monitoring_Umumiy_Hisobot", "Statistik Hisobot")}
             className="px-6 py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition shadow-lg flex items-center gap-2"
           >
             📄 {t.exportData}
@@ -274,30 +351,55 @@ export const AdminDashboard: React.FC<Props> = ({ data, lang, onClear, onRefresh
         <div className="space-y-6 fade-in">
           {Object.entries(groupedData).map(([school, classes]) => (
             <div key={school} className="glass-morphism rounded-[2.5rem] overflow-hidden border border-white/50 shadow-lg">
-              <button 
-                onClick={() => setExpandedSchool(expandedSchool === school ? null : school)}
-                className="w-full p-8 flex justify-between items-center bg-white/40 hover:bg-white/60 transition"
-              >
-                <div className="flex items-center gap-6">
-                  <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-blue-200">🏫</div>
-                  <div className="text-left">
-                    <h4 className="text-xl font-black text-black">{school}-maktab</h4>
-                    <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">{Object.keys(classes).length} {t.classes}</p>
+              <div className="flex items-center bg-white/40 hover:bg-white/60 transition">
+                <button 
+                  onClick={() => setExpandedSchool(expandedSchool === school ? null : school)}
+                  className="flex-grow p-8 flex justify-between items-center"
+                >
+                  <div className="flex items-center gap-6">
+                    <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-blue-200">🏫</div>
+                    <div className="text-left">
+                      <h4 className="text-xl font-black text-black">{school}-maktab</h4>
+                      <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">{Object.keys(classes).length} {t.classes}</p>
+                    </div>
                   </div>
-                </div>
-                <div className={`transition-transform duration-300 ${expandedSchool === school ? 'rotate-180' : ''}`}>▼</div>
-              </button>
+                  <div className={`transition-transform duration-300 ${expandedSchool === school ? 'rotate-180' : ''}`}>▼</div>
+                </button>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const schoolData = Object.values(classes).flat();
+                    exportToWord(generateReportForData(schoolData, `${school}-maktab Hisoboti`), `${school}_maktab_hisoboti`, "Maktab Hisoboti");
+                  }}
+                  className="mr-8 p-3 bg-blue-100 text-blue-700 rounded-xl hover:bg-blue-200 transition text-xs font-bold flex items-center gap-2"
+                  title="Maktab hisobotini yuklash"
+                >
+                  📄 Word
+                </button>
+              </div>
               {expandedSchool === school && (
                 <div className="p-8 space-y-4 border-t border-white/40 bg-white/20">
                   {Object.entries(classes).map(([className, students]) => (
                     <div key={className} className="bg-white/60 rounded-3xl border border-white overflow-hidden shadow-sm">
-                      <button 
-                        onClick={() => setExpandedClass(expandedClass === `${school}-${className}` ? null : `${school}-${className}`)}
-                        className="w-full px-6 py-5 flex justify-between items-center hover:bg-white/80 transition"
-                      >
-                        <span className="text-sm font-black text-black">{className} sinf ({students.length} o'quvchi)</span>
-                        <div className={`transition-transform duration-300 ${expandedClass === `${school}-${className}` ? 'rotate-180' : ''}`}>▼</div>
-                      </button>
+                      <div className="flex items-center hover:bg-white/80 transition">
+                        <button 
+                          onClick={() => setExpandedClass(expandedClass === `${school}-${className}` ? null : `${school}-${className}`)}
+                          className="flex-grow px-6 py-5 flex justify-between items-center"
+                        >
+                          <span className="text-sm font-black text-black">{className} sinf ({students.length} o'quvchi)</span>
+                          <div className={`transition-transform duration-300 ${expandedClass === `${school}-${className}` ? 'rotate-180' : ''}`}>▼</div>
+                        </button>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            exportToWord(generateReportForData(students, `${school}-maktab, ${className} sinf Hisoboti`), `${school}_maktab_${className}_sinf`, "Sinf Hisoboti");
+                          }}
+                          className="mr-6 p-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-[10px] font-bold"
+                          title="Sinf hisobotini yuklash"
+                        >
+                          📄 Word
+                        </button>
+                      </div>
                       {expandedClass === `${school}-${className}` && (
                         <div className="px-6 pb-6 pt-2 divide-y divide-gray-100 fade-in">
                           {students.map(student => (
